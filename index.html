@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Paint</title>
+    <link rel="stylesheet" href="https://unpkg.com/98.css" />
+    <link rel="stylesheet" href="/style.min.css" />
+  </head>
+  <body>
+    <div class="window h-full">
+      <header class="title-bar">
+        <div class="title-bar-text flex items-center">
+          <img width="20" height="20" src="/assets/logo.png" /> Dev Girl - Paint
+        </div>
+
+        <div class="title-bar-controls">
+          <button aria-label="Minimize"></button>
+          <button aria-label="Maximize"></button>
+          <button aria-label="Close"></button>
+        </div>
+      </header>
+
+      <main class="window-body">
+        <div class="menu"><button id="save">Sauvegarder</button></div>
+        <!-- Toolbar & canvas -->
+        <div class="flex">
+          <ul class="toolbar">
+            <li class="toolbar__item">
+              <button id="eraser" aria-label="Gomme"></button>
+            </li>
+            <li class="toolbar__item">
+              <button id="brush" aria-label="Pinceau" class="active"></button>
+            </li>
+            <li class="toolbar__empty"></li>
+          </ul>
+          <div id="canvas-container" class="container">
+            <canvas class="container__canvas" id="canvas">Fallback text</canvas>
+          </div>
+        </div>
+        <!-- Properties -->
+        <div class="properties">
+          <div class="color">
+            <div class="color__square"></div>
+            <div class="color__square"></div>
+          </div>
+          <ul class="properties__list">
+            <li class="properties__item">
+              <button>Saturation</button>
+              <div class="properties__item__submenu">
+                <input
+                  name="saturation"
+                  type="range"
+                  min="1"
+                  max="100"
+                  value="50"
+                />
+                <p><span>50</span>%</p>
+              </div>
+            </li>
+            <li class="properties__item">
+              <button>Luminosité</button>
+              <div class="properties__item__submenu">
+                <input
+                  name="luminosity"
+                  type="range"
+                  min="1"
+                  max="100"
+                  value="50"
+                />
+                <p><span>50</span>%</p>
+              </div>
+            </li>
+            <li class="properties__item">
+              <button>Taille</button>
+              <div class="properties__item__submenu">
+                <input name="size" type="range" min="1" max="50" value="7" />
+                <p><span>7</span>px</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </main>
+    </div>
+
+    <div id="login" style="display: none" class="login">
+      <form action="">
+        <div>
+          <label for="username">Pseudo</label>
+          <input type="text" id="username" name="username" />
+        </div>
+
+        <button type="submit">Se connecter</button>
+      </form>
+    </div>
+    <button id="logout">Se déconnecter</button>
+    <div class="flex">
+      <ul id="logs"></ul>
+      <ul id="online"></ul>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      var socket = io();
+    </script>
+    <script src="/script.js"></script>
+    <script>
+      // Log in user
+      socket.on("userLogged", (user) => {
+        if (user.id !== session.id)
+          logs.innerHTML += `<li>${user.username} a rejoint la partie !</li>`;
+        else {
+          session = user;
+        }
+
+        online.innerHTML += `<li data-id="${user.id}">${user.username}</li>`;
+      });
+      // log out user
+      socket.on("userLogout", (user) => {
+        if (user.id !== session.id)
+          logs.innerHTML += `<li>${user.username} a quitté la partie !</li>`;
+      });
+
+      socket.on("draw", (ellipse) => drawEllipse(ellipse));
+      function drawEllipse(ellipse) {
+        if (ellipse.id !== session.id) {
+          ctx.beginPath(); // begin the drawing path
+          ctx.fillStyle = ellipse.color;
+          ctx.fillRect(
+            ellipse.x - ellipse.size / 2,
+            ellipse.y - ellipse.size / 2,
+            ellipse.size,
+            ellipse.size
+          );
+        }
+      }
+    </script>
+  </body>
+</html>
