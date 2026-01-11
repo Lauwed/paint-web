@@ -1,14 +1,18 @@
-const sanitizeHtml = require("sanitize-html");
+import sanitizeHtml from "sanitize-html";
+import express from "express";
+import http from "http";
+import { Server } from "socket.io";
 
-const express = require("express");
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 const app = express();
-const http = require("http");
 const server = http.createServer(app);
-// Socket IO
-const { Server } = require("socket.io");
 const io = new Server(server);
 
-const connectedUsers = [];
+let connectedUsers = [];
 
 function removeUserWithID(arr, id) {
   const user = arr.findIndex((u) => u.id === id);
@@ -21,23 +25,26 @@ function isUserAlreadyConnected(user) {
   return connectedUsers.some((u) => u.id === user.id);
 }
 
-// Public files are in public directory
-app.use(express.static("public"));
+setInterval(() => {
+  if (connectedUsers.length > 0) {
+    console.log("draw number reset", connectedUsers);
+    connectedUsers = connectedUsers.map((u) => ({ ...u, drawNumber: 0 }));
+  }
+}, 10000);
 
-app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/index.html");
+// Public files are in public directory
+app.use(express.static("dist"));
+
+app.get("/", (_, res) => {
+  res.sendFile(__dirname + "/dist/index.html");
 });
 
 io.on("connection", async (socket) => {
-  // const sockets = await io.fetchSockets();
-
-  // io.emit("online", socket.);
-
   // When user logged in
   socket.on("userLogged", (user) => {
     const username = sanitizeHtml(user.username).trim();
 
-    if(!username || username === '') {
+    if (!username || username === "") {
       io.emit("errorBadUsername");
       return;
     }
@@ -45,6 +52,7 @@ io.on("connection", async (socket) => {
     const newUser = {
       ...user,
       username: username,
+      drawNumber: 0,
     };
     console.log(connectedUsers);
 
@@ -63,12 +71,19 @@ io.on("connection", async (socket) => {
   });
 
   // When user draw
-  socket.on("draw", (ellipse) => {
-    io.emit("draw", ellipse);
-  });
+  socket.on("draw", (ellipse, callback) => {
+    const user = connectedUsers.find((u) => u.id === ellipse.id);
 
-  // User's mouse moving
-  // socket.on("mousemove", (pos) => console.log(pos));
+    if (user && user.drawNumber < 20000) {
+      user.drawNumber++;
+
+      io.emit("draw", ellipse);
+
+      callback({ ok: true });
+    } else {
+      callback({ ok: false });
+    }
+  });
 
   socket.on("disconnect", () => {
     if (socket.user) io.emit("userLogout", socket.user);

@@ -6,14 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Paint</title>
     <link rel="stylesheet" href="https://unpkg.com/98.css" />
-    <link rel="stylesheet" href="/style.min.css" />
   </head>
 
   <body>
     <div class="paint window h-full">
       <header class="title-bar">
         <div class="title-bar-text flex items-center">
-          <img width="20" height="20" src="/assets/logo.png" /> Dev Girl - Paint
+          <img width="20" height="20" src="/logo.png" /> Dev Girl - Paint
         </div>
 
         <div class="title-bar-controls">
@@ -108,7 +107,7 @@
         <dialog id="login" class="login window">
           <header class="login__header title-bar">
             <div class="title-bar-text flex items-center">
-              <img width="20" height="20" src="/assets/windows.png" /> Log In
+              <img width="20" height="20" src="/windows.png" /> Log In
             </div>
 
             <div class="title-bar-controls">
@@ -138,70 +137,6 @@
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script>
-      let socket = io();
-      let connectedUsers = [];
-    </script>
-    <script src="/script.js"></script>
-    <script>
-      const getUserHTML = (user) => {
-        return `
-          <li class="online__user" data-id="${user.id}">
-            <span class="online__user__color" style="background-color: ${color(
-              user.hue,
-              50,
-              50
-            )}"></span>
-            <span class="online__user__name">${user.username}</span>  
-          </li>
-        `;
-      };
-
-      const displayConnectedUsers = () => {
-        if (connectedUsers) {
-          let connectedUsersHTML = "";
-          connectedUsers.forEach((u) => (connectedUsersHTML += getUserHTML(u)));
-          online.innerHTML = connectedUsersHTML;
-        }
-      };
-
-      // Log in user
-      socket.on("userLogged", (user, connected) => {
-        if (session === null || user.id !== session.id) {
-          logs.innerHTML += `<li>${user.username} a rejoint la partie !</li>`;
-        } else {
-          session = user;
-        }
-
-        connectedUsers = connected;
-        displayConnectedUsers();
-      });
-      // log out user
-      socket.on("userLogout", (user, connected) => {
-        if (session === null || user.id !== session.id)
-          logs.innerHTML += `<li>${user.username} a quitté la partie !</li>`;
-
-        connectedUsers = connected;
-        displayConnectedUsers();
-      });
-      // Error login
-      socket.on("errorBadUsername", () => {
-        errorUsername.innerHTML = "Mauvais nom d'utilisateur.ice (:";
-      });
-
-      socket.on("draw", (ellipse) => drawEllipse(ellipse));
-      function drawEllipse(ellipse) {
-        if (session === null || ellipse.id !== session.id) {
-          ctx.beginPath(); // begin the drawing path
-          ctx.fillStyle = ellipse.color;
-          ctx.fillRect(
-            ellipse.x - ellipse.size / 2,
-            ellipse.y - ellipse.size / 2,
-            ellipse.size,
-            ellipse.size
-          );
-        }
-      }
-    </script>
+    <script src="/src/main.js" type="module"></script>
   </body>
 </html>

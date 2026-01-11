@@ -79,7 +79,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: center / cover no-repeat url("/assets/background.png");
+  background: center / cover no-repeat url("/background.png");
 }
 
 dialog {
@@ -139,10 +139,10 @@ dialog {
     aspect-ratio: 1 / 1;
 
     &[aria-label="Gomme"] {
-      background-image: url("/assets/eraser.png");
+      background-image: url("/eraser.png");
     }
     &[aria-label="Pinceau"] {
-      background-image: url("/assets/brush.png");
+      background-image: url("/brush.png");
     }
 
     &.active {
