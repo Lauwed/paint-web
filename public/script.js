@@ -10,42 +10,71 @@ let session = null;
 let currentWindowWidth;
 
 /**
+ * USER COLOR
+ */
+let root = document.documentElement;
+let luminosity = 50;
+let saturation = 50;
+let hue = Math.random() * 360;
+let color = (h, s, l) => "hsl(" + h + " " + s + "% " + l + "%)";
+let setColor = (h, s, l, init = false) => {
+  if (init) root.style.setProperty("--base-color", color(h, s, l));
+  root.style.setProperty("--color", color(h, s, l));
+};
+
+/**
  * SESSION
  */
-const logs = document.querySelector("#logs");
-const online = document.querySelector("#online");
+const logs = document.querySelector("#logs-list");
+const online = document.querySelector("#online-users");
 const loginModal = document.querySelector("#login");
 const logoutButton = document.querySelector("#logout");
+const errorUsername = document.querySelector("#error-username");
 const emitUserLogged = (s) => socket.emit("userLogged", s);
 const emitUserLogout = (s) => socket.emit("userLogout", s);
 // Check if local storage for paint exists
 if (window.localStorage.getItem("devgirlpaint")) {
   // If already login, retrieve session
   session = JSON.parse(window.localStorage.getItem("devgirlpaint"));
+  // Set color
+  hue = session.hue;
+  setColor(hue, luminosity, saturation, true);
   // log
   logs.innerHTML += `<li>Welcome back ${session.username}.</li>`;
   // Socket IO
   emitUserLogged(session);
 } else {
-  // If log out
+  // If logged out
   // Display login form
-  loginModal.style.display = "block";
+  loginModal.showModal();
   logoutButton.style.display = "none";
+
+  setColor(hue, luminosity, saturation, true);
+
   // form eventlistener
   loginModal.querySelector("form").addEventListener("submit", (e) => {
     e.preventDefault();
-    const username = e.target.querySelector("input#username").value;
+    errorUsername.innerHTML = "";
+    const username = e.target.querySelector("input#username").value.trim();
+
     if (username && username !== "") {
-      session = { username, id: `${username}#${Math.random() * 4000}` };
+      session = {
+        username,
+        id: `${username}#${Math.random() * 4000}`,
+        hue,
+      };
       // Save dans le local storage
       window.localStorage.setItem("devgirlpaint", JSON.stringify(session));
       // Hide login modal
-      loginModal.style.display = "none";
-      logoutButton.style.display = "block";
+      loginModal.close();
+      logoutButton.style.display = "inline-block";
+
       // Log connected
       logs.innerHTML += `<li>Bienvenue ${username}, tu as été correctement connecté.</li>`;
       // Socket IO
       emitUserLogged(session);
+    } else {
+      // TODO: Display error
     }
   });
 }
@@ -53,7 +82,7 @@ if (window.localStorage.getItem("devgirlpaint")) {
 logoutButton.addEventListener("click", () => {
   window.localStorage.removeItem("devgirlpaint");
   // Display login form
-  loginModal.style.display = "block";
+  loginModal.showModal();
   logoutButton.style.display = "none";
 
   // Log connected
@@ -68,14 +97,7 @@ logoutButton.addEventListener("click", () => {
 /**
  * CANVAS
  */
-let root = document.documentElement;
 let brushthickness = 7;
-let luminosity = 50;
-let saturation = 50;
-let hue = Math.random() * 360;
-let color = (s, l) => "hsl(" + hue + " " + s + "% " + l + "%)";
-root.style.setProperty("--base-color", color(saturation, luminosity));
-root.style.setProperty("--color", color(saturation, luminosity));
 let pos = { x: 0, y: 0 };
 let eraser = false;
 let brush = true;
@@ -84,10 +106,12 @@ const brushButton = document.querySelector("#brush");
 
 // Canvas
 const canvas = document.querySelector("#canvas");
+const canvasGrid = document.querySelector("#canvas-grid");
 const canvasContainer = document.querySelector("#canvas-container");
 let offsetX = canvas.offsetLeft;
 let offsetY = canvas.offsetTop;
 let ctx = canvas.getContext("2d");
+let ctxGrid = canvasGrid.getContext("2d");
 // Desktop
 canvas.addEventListener("mousemove", draw);
 canvas.addEventListener("mousedown", (e) => {
@@ -102,15 +126,20 @@ canvas.addEventListener("touchstart", (e) => {
   setPosition(e);
   draw(e);
 });
+
 function draw(e) {
   if (!session) return;
   // if mouse is not clicked, do not go further
   if (e.buttons !== 1) return;
 
   ctx.beginPath(); // begin the drawing path
-  if (brush) ctx.fillStyle = color(saturation, luminosity);
-  // hex color of line
-  else if (eraser) ctx.fillStyle = color(saturation, 100); // hex color of line
+  ctx.fillStyle = color(hue, saturation, luminosity); // hex color of line
+  if (brush) {
+    ctx.globalCompositeOperation = "source-over";
+  }
+  else if (eraser) {
+    ctx.globalCompositeOperation = "destination-out";
+  }
   setPosition(e);
 
   ctx.fillRect(
@@ -122,15 +151,16 @@ function draw(e) {
 
   socket.emit("draw", {
     id: session.id,
-    color: color(saturation, eraser ? 100 : luminosity),
+    color: color(hue, saturation, luminosity),
     x: pos.x,
     y: pos.y,
     size: brushthickness,
   });
 }
+
 function setPosition(e) {
-  pos.x = parseInt(e.clientX + canvasContainer.scrollLeft - offsetX);
-  pos.y = parseInt(e.clientY + canvasContainer.scrollTop - offsetY);
+  pos.x = parseInt(e.layerX);
+  pos.y = parseInt(e.layerY);
 
   socket.emit("mousemove", { x: pos.x, y: pos.y });
 }
@@ -147,7 +177,8 @@ function editColor(input, value) {
   if (input.name === "saturation") saturation = input.value;
   else if (input.name === "luminosity") luminosity = input.value;
   else if (input.name === "size") brushthickness = input.value;
-  root.style.setProperty("--color", color(saturation, luminosity));
+
+  setColor(hue, saturation, luminosity);
 }
 
 // Toolbar
@@ -192,9 +223,12 @@ function resize() {
   const displayHeight = canvas.clientHeight;
 
   const data = ctx.getImageData(0, 0, currentWindowWidth, currentWindowWidth);
-  console.log(window.innerWidth * 2);
   canvas.width = displayWidth;
+  canvasGrid.width = displayWidth;
+
   canvas.height = displayHeight;
+  canvasGrid.height = displayHeight;
+
   if (data) ctx.putImageData(data, 0, 0);
 
   currentWindowWidth = window.innerWidth;
@@ -202,41 +236,52 @@ function resize() {
 
 // Init size
 currentWindowWidth = window.innerWidth;
+
 canvas.width = currentWindowWidth * 2;
+canvasGrid.width = currentWindowWidth * 2;
+
 canvas.height = currentWindowWidth * 2;
+canvasGrid.height = currentWindowWidth * 2;
 
 // draw a line every *step* pixels
 const step = 50;
 // set our styles
-ctx.save();
-ctx.strokeStyle = "gray"; // line colors
-ctx.fillStyle = "black"; // text color
-ctx.font = "14px Monospace";
-ctx.lineWidth = 0.35;
+ctxGrid.save();
+ctxGrid.strokeStyle = "gray"; // line colors
+ctxGrid.lineWidth = 0.35;
 
 // draw vertical from X to Height
 for (let x = 0; x < canvas.clientWidth; x += step) {
   // draw vertical line
-  ctx.beginPath();
-  ctx.moveTo(x, 0);
-  ctx.lineTo(x, canvas.clientWidth);
-  ctx.stroke();
-
-  // draw text
-  ctx.fillText(x, x, 12);
+  ctxGrid.beginPath();
+  ctxGrid.moveTo(x, 0);
+  ctxGrid.lineTo(x, canvas.clientWidth);
+  ctxGrid.stroke();
 }
 
 // draw horizontal from Y to Width
 for (let y = 0; y < canvas.clientHeight; y += step) {
   // draw horizontal line
-  ctx.beginPath();
-  ctx.moveTo(0, y);
-  ctx.lineTo(canvas.clientHeight, y);
-  ctx.stroke();
-
-  // draw text
-  ctx.fillText(y, 0, y);
+  ctxGrid.beginPath();
+  ctxGrid.moveTo(0, y);
+  ctxGrid.lineTo(canvas.clientHeight, y);
+  ctxGrid.stroke();
 }
 
 // restore the styles from before this function was called
-ctx.restore();
+ctxGrid.restore();
+
+
+const modalButtons = document.querySelectorAll("button[data-modal]");
+modalButtons.forEach(button => {
+  const modal = document.querySelector(`#${button.dataset.modal}`);
+  const closeModalButton = modal.querySelector("button[autofocus]");
+  console.log(modal)
+
+  button.addEventListener("click", () => {
+    modal.showModal();
+  })
+  closeModalButton.addEventListener("click", () => {
+    modal.close();
+  })
+})

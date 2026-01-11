@@ -8,8 +8,9 @@
     <link rel="stylesheet" href="https://unpkg.com/98.css" />
     <link rel="stylesheet" href="/style.min.css" />
   </head>
+
   <body>
-    <div class="window h-full">
+    <div class="paint window h-full">
       <header class="title-bar">
         <div class="title-bar-text flex items-center">
           <img width="20" height="20" src="/assets/logo.png" /> Dev Girl - Paint
@@ -22,10 +23,17 @@
         </div>
       </header>
 
-      <main class="window-body">
-        <div class="menu"><button id="save">Sauvegarder</button></div>
-        <!-- Toolbar & canvas -->
-        <div class="flex">
+      <main class="paint__body window-body">
+        <div class="menu">
+          <button id="save">Sauvegarder</button>
+
+          <button id="logs-button" data-modal="logs">Logs</button>
+
+          <button id="logout">Se déconnecter</button>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
           <ul class="toolbar">
             <li class="toolbar__item">
               <button id="eraser" aria-label="Gomme"></button>
@@ -33,98 +41,157 @@
             <li class="toolbar__item">
               <button id="brush" aria-label="Pinceau" class="active"></button>
             </li>
-            <li class="toolbar__empty"></li>
           </ul>
-          <div id="canvas-container" class="container">
-            <canvas class="container__canvas" id="canvas">Fallback text</canvas>
-          </div>
-        </div>
-        <!-- Properties -->
-        <div class="properties">
+
+          <ul class="online" id="online-users"></ul>
+
           <div class="color">
             <div class="color__square"></div>
             <div class="color__square"></div>
           </div>
-          <ul class="properties__list">
-            <li class="properties__item">
-              <button>Saturation</button>
-              <div class="properties__item__submenu">
-                <input
-                  name="saturation"
-                  type="range"
-                  min="1"
-                  max="100"
-                  value="50"
-                />
-                <p><span>50</span>%</p>
-              </div>
-            </li>
-            <li class="properties__item">
-              <button>Luminosité</button>
-              <div class="properties__item__submenu">
-                <input
-                  name="luminosity"
-                  type="range"
-                  min="1"
-                  max="100"
-                  value="50"
-                />
-                <p><span>50</span>%</p>
-              </div>
-            </li>
-            <li class="properties__item">
-              <button>Taille</button>
-              <div class="properties__item__submenu">
-                <input name="size" type="range" min="1" max="50" value="7" />
-                <p><span>7</span>px</p>
-              </div>
-            </li>
-          </ul>
         </div>
+
+        <!-- Canvas + Properties -->
+        <div class="content">
+          <div id="canvas-container" class="canvas">
+            <canvas class="canvas__grid" id="canvas-grid">Fallback text</canvas>
+            <canvas class="canvas__drawing" id="canvas">Fallback text</canvas>
+          </div>
+
+          <div class="properties">
+            <ul class="properties__list">
+              <li class="properties__item">
+                <button>Saturation</button>
+                <div class="properties__item__submenu">
+                  <input
+                    name="saturation"
+                    type="range"
+                    min="1"
+                    max="100"
+                    value="50"
+                  />
+                  <p><span>50</span>%</p>
+                </div>
+              </li>
+              <li class="properties__item">
+                <button>Luminosité</button>
+                <div class="properties__item__submenu">
+                  <input
+                    name="luminosity"
+                    type="range"
+                    min="1"
+                    max="100"
+                    value="50"
+                  />
+                  <p><span>50</span>%</p>
+                </div>
+              </li>
+              <li class="properties__item">
+                <button>Taille</button>
+                <div class="properties__item__submenu">
+                  <input name="size" type="range" min="1" max="50" value="7" />
+                  <p><span>7</span>px</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Logs Modal -->
+        <dialog class="logs" id="logs">
+          <button class="logs__close" autofocus>Close</button>
+
+          <ul id="logs-list"></ul>
+        </dialog>
+
+        <!-- Login Modal -->
+        <dialog id="login" class="login window">
+          <header class="login__header title-bar">
+            <div class="title-bar-text flex items-center">
+              <img width="20" height="20" src="/assets/windows.png" /> Log In
+            </div>
+
+            <div class="title-bar-controls">
+              <button aria-label="Minimize" disabled></button>
+              <button aria-label="Maximize" disabled></button>
+              <button aria-label="Close" disabled></button>
+            </div>
+          </header>
+
+          <form action="" class="login__body window-body">
+            <div>
+              <label for="username">Pseudo</label>
+              <input type="text" id="username" name="username" />
+            </div>
+            <p id="error-username"></p>
+
+            <button type="submit">Se connecter</button>
+          </form>
+        </dialog>
       </main>
-    </div>
 
-    <div id="login" style="display: none" class="login">
-      <form action="">
-        <div>
-          <label for="username">Pseudo</label>
-          <input type="text" id="username" name="username" />
-        </div>
-
-        <button type="submit">Se connecter</button>
-      </form>
-    </div>
-    <button id="logout">Se déconnecter</button>
-    <div class="flex">
-      <ul id="logs"></ul>
-      <ul id="online"></ul>
+      <div class="status-bar">
+        <p class="status-bar-field">Press F1 for help</p>
+        <p class="status-bar-field">Slide 1</p>
+        <p class="status-bar-field">CPU Usage: 14%</p>
+      </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-      var socket = io();
+      let socket = io();
+      let connectedUsers = [];
     </script>
     <script src="/script.js"></script>
     <script>
+      const getUserHTML = (user) => {
+        return `
+          <li class="online__user" data-id="${user.id}">
+            <span class="online__user__color" style="background-color: ${color(
+              user.hue,
+              50,
+              50
+            )}"></span>
+            <span class="online__user__name">${user.username}</span>  
+          </li>
+        `;
+      };
+
+      const displayConnectedUsers = () => {
+        if (connectedUsers) {
+          let connectedUsersHTML = "";
+          connectedUsers.forEach((u) => (connectedUsersHTML += getUserHTML(u)));
+          online.innerHTML = connectedUsersHTML;
+        }
+      };
+
       // Log in user
-      socket.on("userLogged", (user) => {
-        if (user.id !== session.id)
+      socket.on("userLogged", (user, connected) => {
+        if (session === null || user.id !== session.id) {
           logs.innerHTML += `<li>${user.username} a rejoint la partie !</li>`;
-        else {
+        } else {
           session = user;
         }
 
-        online.innerHTML += `<li data-id="${user.id}">${user.username}</li>`;
+        connectedUsers = connected;
+        displayConnectedUsers();
       });
       // log out user
-      socket.on("userLogout", (user) => {
-        if (user.id !== session.id)
+      socket.on("userLogout", (user, connected) => {
+        if (session === null || user.id !== session.id)
           logs.innerHTML += `<li>${user.username} a quitté la partie !</li>`;
+
+        connectedUsers = connected;
+        displayConnectedUsers();
+      });
+      // Error login
+      socket.on("errorBadUsername", () => {
+        errorUsername.innerHTML = "Mauvais nom d'utilisateur.ice (:";
       });
 
       socket.on("draw", (ellipse) => drawEllipse(ellipse));
       function drawEllipse(ellipse) {
-        if (ellipse.id !== session.id) {
+        if (session === null || ellipse.id !== session.id) {
           ctx.beginPath(); // begin the drawing path
           ctx.fillStyle = ellipse.color;
           ctx.fillRect(

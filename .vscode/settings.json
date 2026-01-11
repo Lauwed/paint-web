@@ -3,5 +3,14 @@
     "activityBar.background": "#023614",
     "titleBar.activeBackground": "#034B1C",
     "titleBar.activeForeground": "#ECFEF2"
-  }
+  },
+  "liveSassCompile.settings.formats": [
+    {
+      "format": "compressed",
+      "extensionName": ".min.css",
+      "generateMap": true,
+      "savePath": null,
+      "savePathReplacementPairs": null
+    }
+  ]
 }
