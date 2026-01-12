@@ -1,9 +1,7 @@
-import type { Socket } from "socket.io";
+import type { Socket } from "socket.io-client";
 import type {
-  ClientToServerEvents,
   Color,
   Position,
-  ServerToClientEvents,
   Shape,
   Tool,
   User,
@@ -11,14 +9,14 @@ import type {
 
 export const emitUserLogged = (
   u: User | null,
-  socket: Socket<ServerToClientEvents, ClientToServerEvents>
+  socket: Socket
 ) => {
   if (u) socket.emit("userLogged", u);
 };
 
 export const emitUserLogout = (
   u: User | null,
-  socket: Socket<ServerToClientEvents, ClientToServerEvents>
+  socket: Socket
 ) => {
   if (u) socket.emit("userLogout", u);
 };
@@ -54,7 +52,7 @@ export const logOutUser = (
   loginModal: HTMLDialogElement | null,
   logoutButton: HTMLButtonElement | null,
   session: User | null,
-  socket: Socket<ServerToClientEvents, ClientToServerEvents>
+  socket: Socket
 ) => {
   window.localStorage.removeItem("devgirlpaint");
 
@@ -122,7 +120,7 @@ export const setColor = (
 export function setPosition(
   e: MouseEvent | TouchEvent,
   pos: Position,
-  socket: Socket<ServerToClientEvents, ClientToServerEvents>
+  socket: Socket
 ) {
   const rect = (e.target as HTMLElement).getBoundingClientRect();
 
@@ -175,7 +173,7 @@ export function draw(
   session: User | null,
   context: CanvasRenderingContext2D | null,
   color: Color,
-  socket: Socket<ServerToClientEvents, ClientToServerEvents>,
+  socket: Socket,
   tool: Tool,
   pos: Position,
   brushThickness: number,
