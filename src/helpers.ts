@@ -119,12 +119,18 @@ export function setPosition(
   socket: Socket
 ) {
   const rect = (e.target as HTMLElement).getBoundingClientRect();
+  const wRatio =
+    (e.target as HTMLCanvasElement).width /
+    (e.target as HTMLCanvasElement).clientWidth;
+  const hRatio =
+    (e.target as HTMLCanvasElement).height /
+    (e.target as HTMLCanvasElement).clientHeight;
 
   const x = e instanceof MouseEvent ? e.clientX : e.touches[0].clientX;
   const y = e instanceof MouseEvent ? e.clientY : e.touches[0].clientY;
 
-  pos.x = Math.floor(x - rect.x);
-  pos.y = Math.floor(y - rect.y);
+  pos.x = Math.floor((x - rect.x) * wRatio);
+  pos.y = Math.floor((y - rect.y) * hRatio);
 
   socket.emit("mousemove", { x: pos.x, y: pos.y });
 }
