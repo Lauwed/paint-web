@@ -196,10 +196,55 @@ const brushButton = document.querySelector("#brush");
 const canvas: HTMLCanvasElement | null = document.querySelector("#canvas");
 const canvasGrid: HTMLCanvasElement | null =
   document.querySelector("#canvas-grid");
+const canvasContainer: HTMLElement | null =
+  document.querySelector("#canvas-container");
+const brushCursor: HTMLElement | null = document.querySelector("#brush-cursor");
 const ctx = canvas?.getContext("2d") || null;
 const ctxGrid = canvasGrid?.getContext("2d") || null;
 const canvasContainer: HTMLElement | null =
   document.getElementById("canvas-container");
+
+function updateBrushCursorSize() {
+  if (brushCursor) {
+    brushCursor.style.width = `${brushThickness}px`;
+    brushCursor.style.height = `${brushThickness}px`;
+  }
+}
+
+function updateBrushCursorPosition(e: MouseEvent) {
+  if (brushCursor && canvasContainer) {
+    const rect = canvasContainer.getBoundingClientRect();
+    const x = e.clientX - rect.left + canvasContainer.scrollLeft - 2; // - 2px because of the border...
+    const y = e.clientY - rect.top + canvasContainer.scrollTop - 2;
+    brushCursor.style.left = `${x}px`;
+    brushCursor.style.top = `${y}px`;
+  }
+}
+
+function showBrushCursor() {
+  if (brushCursor) {
+    brushCursor.style.display = "block";
+  }
+}
+
+function hideBrushCursor() {
+  if (brushCursor) {
+    brushCursor.style.display = "none";
+  }
+}
+
+function updateBrushCursorStyle() {
+  if (brushCursor) {
+    if (tool === "ERASER") {
+      brushCursor.style.backgroundColor = "white";
+    } else {
+      brushCursor.style.backgroundColor = "var(--color)";
+    }
+  }
+}
+
+updateBrushCursorSize();
+updateBrushCursorStyle();
 
 if (canvas) {
   const events = ["mousemove", "mousedown", "touchstart", "touchmove"] as const;
@@ -229,6 +274,7 @@ if (canvas) {
 
   canvas.addEventListener("mouseleave", () => {
     resetDrawState();
+    hideBrushCursor();
   });
 
   canvas.addEventListener("touchend", () => {
@@ -237,6 +283,12 @@ if (canvas) {
 
   canvas.addEventListener("mouseenter", (e: MouseEvent) => {
     setPosition(e, pos, socket);
+    showBrushCursor();
+    updateBrushCursorPosition(e);
+  });
+
+  canvas.addEventListener("mousemove", (e: MouseEvent) => {
+    updateBrushCursorPosition(e);
   });
 }
 
@@ -336,6 +388,7 @@ document.querySelectorAll(".properties__item").forEach((item) => {
         );
 
         brushThickness = thickness;
+        updateBrushCursorSize();
       });
     }
   }
@@ -345,12 +398,14 @@ eraserButton?.addEventListener("click", () => {
   tool = "ERASER";
   eraserButton.classList.toggle("active");
   brushButton?.classList.toggle("active");
+  updateBrushCursorStyle();
 });
 
 brushButton?.addEventListener("click", () => {
   tool = "BRUSH";
   eraserButton?.classList.toggle("active");
   brushButton.classList.toggle("active");
+  updateBrushCursorStyle();
 });
 
 document.querySelector("#save")?.addEventListener("click", () => {
