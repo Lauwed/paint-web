@@ -1,23 +1,11 @@
 import type { Socket } from "socket.io-client";
-import type {
-  Color,
-  Position,
-  Shape,
-  Tool,
-  User,
-} from "./types";
+import type { Color, Position, Shape, Tool, User } from "./types";
 
-export const emitUserLogged = (
-  u: User | null,
-  socket: Socket
-) => {
+export const emitUserLogged = (u: User | null, socket: Socket) => {
   if (u) socket.emit("userLogged", u);
 };
 
-export const emitUserLogout = (
-  u: User | null,
-  socket: Socket
-) => {
+export const emitUserLogout = (u: User | null, socket: Socket) => {
   if (u) socket.emit("userLogout", u);
 };
 
