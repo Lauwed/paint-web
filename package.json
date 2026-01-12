@@ -5,9 +5,10 @@
   "main": "index.js",
   "scripts": {
     "watch": "tsc && npx prettier . --write && vite build --watch",
-    "build": "tsc && vite build",
+    "build": "tsc && npx prettier . --check && vite build",
     "start": "node index.js",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test": "timeout 5 node --env-file=.env index.js"
   },
   "lint-staged": {
     "**/*": "prettier --write --ignore-unknown"
