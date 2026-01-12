@@ -1,24 +1,42 @@
-import type { Color, Position, Shape, Tool, User } from "./types";
+import type { Socket } from "socket.io";
+import type {
+  ClientToServerEvents,
+  Color,
+  Position,
+  ServerToClientEvents,
+  Shape,
+  Tool,
+  User,
+} from "./types";
 
-export const emitUserLogged = (s: User | null, socket: any) =>
-  socket.emit("userLogged", s);
-export const emitUserLogout = (s: User | null, socket: any) =>
-  socket.emit("userLogout", s);
+export const emitUserLogged = (
+  u: User | null,
+  socket: Socket<ServerToClientEvents, ClientToServerEvents>
+) => {
+  if (u) socket.emit("userLogged", u);
+};
 
-export let getColor = (h: number, s: number, l: number) =>
+export const emitUserLogout = (
+  u: User | null,
+  socket: Socket<ServerToClientEvents, ClientToServerEvents>
+) => {
+  if (u) socket.emit("userLogout", u);
+};
+
+export const getColor = (h: number, s: number, l: number) =>
   "hsl(" + h + " " + s + "% " + l + "%)";
 
 export const getUserHTML = (user: User) => {
   return `
-          <li class="online__user" data-id="${user.id}">
-            <span class="online__user__color" style="background-color: ${getColor(
-              user.hue,
-              50,
-              50
-            )}"></span>
-            <span class="online__user__name">${user.username}</span>  
-          </li>
-        `;
+    <li class="online__user" data-id="${user.id}">
+      <span class="online__user__color" style="background-color: ${getColor(
+        user.hue,
+        50,
+        50
+      )}"></span>
+      <span class="online__user__name">${user.username}</span>  
+    </li>
+  `;
 };
 
 export const displayConnectedUsers = (
@@ -35,9 +53,8 @@ export const displayConnectedUsers = (
 export const logOutUser = (
   loginModal: HTMLDialogElement | null,
   logoutButton: HTMLButtonElement | null,
-  logs: HTMLUListElement | null,
   session: User | null,
-  socket: any
+  socket: Socket<ServerToClientEvents, ClientToServerEvents>
 ) => {
   window.localStorage.removeItem("devgirlpaint");
 
@@ -47,16 +64,26 @@ export const logOutUser = (
     logoutButton.style.display = "none";
   }
 
-  // Log connected
-  if (logs) {
-    logs.innerHTML += `<li>Bye bye, à bientôt !</li>`;
-  }
-
   // Socket IO
   emitUserLogout(session, socket);
 
   // Null session
   session = null;
+};
+
+export const createLog = (user: User, action: string) => {
+  const logRow = document.createElement("tr");
+
+  [new Date().toISOString(), user.username, action].forEach(
+    (v: string | number) => {
+      const logCell = document.createElement("td");
+      logCell.innerHTML = String(v);
+
+      logRow.appendChild(logCell);
+    }
+  );
+
+  return logRow;
 };
 
 export function drawEllipse(
@@ -95,9 +122,9 @@ export const setColor = (
 export function setPosition(
   e: MouseEvent | TouchEvent,
   pos: Position,
-  socket: any
+  socket: Socket<ServerToClientEvents, ClientToServerEvents>
 ) {
-  let rect = (e.target as HTMLElement).getBoundingClientRect();
+  const rect = (e.target as HTMLElement).getBoundingClientRect();
 
   const x = e instanceof MouseEvent ? e.clientX : e.touches[0].clientX;
   const y = e instanceof MouseEvent ? e.clientY : e.touches[0].clientY;
@@ -108,18 +135,52 @@ export function setPosition(
   socket.emit("mousemove", { x: pos.x, y: pos.y });
 }
 
+export const drawGridCanavas = (
+  context: CanvasRenderingContext2D | null,
+  canvas: HTMLCanvasElement | null
+) => {
+  if (context && canvas) {
+    // draw a line every *step* pixels
+    const step = 50;
+    // set our styles
+    context.save();
+    context.strokeStyle = "gray"; // line colors
+    context.lineWidth = 0.35;
+
+    // draw vertical from X to Height
+    for (let x = 0; x < canvas.clientWidth; x += step) {
+      // draw vertical line
+      context.beginPath();
+      context.moveTo(x, 0);
+      context.lineTo(x, canvas.clientWidth);
+      context.stroke();
+    }
+
+    // draw horizontal from Y to Width
+    for (let y = 0; y < canvas.clientHeight; y += step) {
+      // draw horizontal line
+      context.beginPath();
+      context.moveTo(0, y);
+      context.lineTo(canvas.clientHeight, y);
+      context.stroke();
+    }
+
+    // restore the styles from before this function was called
+    context.restore();
+  }
+};
+
 export function draw(
   e: MouseEvent | TouchEvent,
   session: User | null,
   context: CanvasRenderingContext2D | null,
   color: Color,
-  socket: any,
+  socket: Socket<ServerToClientEvents, ClientToServerEvents>,
   tool: Tool,
   pos: Position,
   brushThickness: number,
   loginModal: HTMLDialogElement | null,
-  logoutButton: HTMLButtonElement | null,
-  logs: HTMLUListElement | null
+  logoutButton: HTMLButtonElement | null
 ) {
   e.preventDefault();
 
@@ -152,10 +213,11 @@ export function draw(
       x: pos.x,
       y: pos.y,
       size: brushThickness,
+      tool,
     },
-    (response: { ok: boolean }) => {
-      if (!response.ok) {
-        logOutUser(loginModal, logoutButton, logs, session, socket);
+    (response: { ok: boolean; id: string }) => {
+      if (!response.ok && response.id === session.id) {
+        logOutUser(loginModal, logoutButton, session, socket);
       }
     }
   );
@@ -182,7 +244,7 @@ export const editColor = (
   color: Color,
   brushThickness: number,
   root: HTMLElement
-): { color: Color; brushThickness: number } => {
+): { color: Color; thickness: number } => {
   if (input && value) {
     value.innerHTML = input.value;
 
@@ -195,6 +257,6 @@ export const editColor = (
 
   return {
     color,
-    brushThickness,
+    thickness: brushThickness,
   };
 };

@@ -290,3 +290,17 @@ dialog {
     }
   }
 }
+
+.logs {
+  width: 30vw;
+
+  &__container {
+    height: 50vh;
+    overflow: auto;
+  }
+
+  &__list {
+    height: 100%;
+    width: 100%;
+  }
+}

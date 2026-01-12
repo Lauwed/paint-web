@@ -11,6 +11,7 @@ export interface Shape {
   x: number;
   y: number;
   size: number;
+  tool?: Tool;
 }
 
 export interface Position {
@@ -25,3 +26,20 @@ export interface Color {
 }
 
 export type Tool = "BRUSH" | "ERASER";
+
+export interface ServerToClientEvents {
+  userLogged: (user: User, connected: User[]) => void;
+  userLogout: (user: User, connected: User[]) => void;
+  draw: (ellipse: Shape) => void;
+}
+
+export interface ClientToServerEvents {
+  userLogged: (user: User) => void;
+  userLogout: (user: User) => void;
+  draw: (
+    ellipse: Shape,
+    callback: (response: { ok: boolean; id: string }) => void
+  ) => void;
+  disconnect: () => void;
+  mousemove: (pos: Position) => void;
+}
