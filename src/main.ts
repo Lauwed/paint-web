@@ -14,6 +14,7 @@ import {
 } from "./helpers";
 import "./style.scss";
 import type { Color, Shape, Tool, User } from "./types";
+import { io } from "socket.io-client";
 
 // SOURCE : https://github.com/AnshikaG0219/web-paint-final
 
@@ -23,7 +24,6 @@ import type { Color, Shape, Tool, User } from "./types";
 // - Le menu en mode Easter egg
 // - limit to brush size
 
-// @ts-expect-error Can't import Socket IO here, so TS error
 const socket = io();
 let connectedUsers: User[] = [];
 

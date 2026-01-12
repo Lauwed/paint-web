@@ -12,7 +12,8 @@
     "canvas": "^3.2.1",
     "express": "^4.18.1",
     "sanitize-html": "^2.17.0",
-    "socket.io": "^4.5.2"
+    "socket.io": "^4.5.2",
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "@eslint/css": "^0.14.1",
