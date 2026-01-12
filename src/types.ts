@@ -4,11 +4,11 @@ export interface User {
   id: string;
 }
 
-export interface Shape {
+export interface Stroke {
   id: string;
   color: string;
-  x: number;
-  y: number;
+  from: Position;
+  to: Position;
   size: number;
   tool?: Tool;
 }
@@ -29,14 +29,14 @@ export type Tool = "BRUSH" | "ERASER";
 export interface ServerToClientEvents {
   userLogged: (user: User, connected: User[]) => void;
   userLogout: (user: User, connected: User[]) => void;
-  draw: (ellipse: Shape) => void;
+  draw: (stroke: Stroke) => void;
 }
 
 export interface ClientToServerEvents {
   userLogged: (user: User) => void;
   userLogout: (user: User) => void;
   draw: (
-    ellipse: Shape,
+    stroke: Stroke,
     callback: (response: { ok: boolean; id: string }) => void
   ) => void;
   disconnect: () => void;

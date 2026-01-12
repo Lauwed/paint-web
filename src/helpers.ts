@@ -1,5 +1,11 @@
 import type { Socket } from "socket.io-client";
-import type { Color, Position, Shape, Tool, User } from "./types";
+import type { Color, Position, Stroke, Tool, User } from "./types";
+
+// THROTTLING and STROKE DATAS
+let lastPoint: Position | null = null;
+let lastSentPoint: Position | null = null;
+let lastSendTime = 0;
+const SEND_INTERVAL = 20; // 20ms
 
 export const emitUserLogout = (u: User | null, socket: Socket) => {
   if (u) socket.emit("userLogout", u);
@@ -68,29 +74,48 @@ export const createLog = (user: User, action: string) => {
   return logRow;
 };
 
-export function drawEllipse(
-  ellipse: Shape,
+// Draw stroke instead point
+export function drawLine(
+  context: CanvasRenderingContext2D,
+  from: Position,
+  to: Position,
+  color: string,
+  size: number,
+  tool: Tool
+) {
+  context.beginPath();
+  context.strokeStyle = color;
+  context.lineWidth = size;
+  context.lineCap = "round";
+  context.lineJoin = "round";
+
+  if (tool === "BRUSH") {
+    context.globalCompositeOperation = "source-over";
+  } else if (tool === "ERASER") {
+    context.globalCompositeOperation = "destination-out";
+  }
+
+  context.moveTo(from.x, from.y);
+  context.lineTo(to.x, to.y);
+  context.stroke();
+}
+
+// Draw stroke fort socket
+export function drawStroke(
+  stroke: Stroke,
   session: User | null,
   context: CanvasRenderingContext2D | null
 ) {
-  if ((session === null || ellipse.id !== session.id) && context) {
-    context.beginPath(); // begin the drawing path
+  if (!context || (session && stroke.id === session.id)) return;
 
-    context.fillStyle = ellipse.color;
-
-    if (ellipse.tool === "BRUSH") {
-      context.globalCompositeOperation = "source-over";
-    } else if (ellipse.tool === "ERASER") {
-      context.globalCompositeOperation = "destination-out";
-    }
-
-    context.fillRect(
-      ellipse.x - ellipse.size / 2,
-      ellipse.y - ellipse.size / 2,
-      ellipse.size,
-      ellipse.size
-    );
-  }
+  drawLine(
+    context,
+    stroke.from,
+    stroke.to,
+    stroke.color,
+    stroke.size,
+    stroke.tool ?? "BRUSH"
+  );
 }
 
 export const setColor = (
@@ -166,6 +191,7 @@ export const drawGridCanavas = (
   }
 };
 
+// New draw function (for strokes)
 export function draw(
   e: MouseEvent | TouchEvent,
   session: User | null,
@@ -181,45 +207,69 @@ export function draw(
 
   if (!session || !context) return;
 
-  // if mouse is not clicked, do not go further
-  if (e instanceof MouseEvent && e.buttons !== 1) return;
-
-  context.beginPath(); // begin the drawing path
-  context.fillStyle = getColor(
-    session.color.h,
-    session.color.s,
-    session.color.l
-  ); // hex color of line
-  if (tool === "BRUSH") {
-    context.globalCompositeOperation = "source-over";
-  } else if (tool === "ERASER") {
-    context.globalCompositeOperation = "destination-out";
+  // If not clicked, reset lastPoint and stop
+  if (e instanceof MouseEvent && e.buttons !== 1) {
+    lastPoint = null;
+    return;
   }
+
+  const previousPoint: Position | null = lastPoint
+    ? { x: lastPoint.x, y: lastPoint.y }
+    : null;
+
   setPosition(e, pos, socket);
 
-  context.fillRect(
-    pos.x - brushThickness / 2,
-    pos.y - brushThickness / 2,
-    brushThickness,
-    brushThickness
-  );
+  const colorString = getColor(session.color.h, session.color.s, session.color.l);
 
-  socket.emit(
-    "draw",
-    {
-      id: session.id,
-      color: getColor(session.color.h, session.color.s, session.color.l),
-      x: pos.x,
-      y: pos.y,
-      size: brushThickness,
-      tool,
-    },
-    (response: { ok: boolean; id: string }) => {
-      if (!response.ok && response.id === session.id) {
-        logOutUser(loginModal, logoutButton, session, socket);
-      }
+  // Draw locally
+  if (previousPoint) {
+    drawLine(context, previousPoint, pos, colorString, brushThickness, tool);
+  } else {
+    context.beginPath();
+    context.fillStyle = colorString;
+    if (tool === "BRUSH") {
+      context.globalCompositeOperation = "source-over";
+    } else if (tool === "ERASER") {
+      context.globalCompositeOperation = "destination-out";
     }
-  );
+    context.arc(pos.x, pos.y, brushThickness / 2, 0, Math.PI * 2);
+    context.fill();
+  }
+
+  // Send to server every SEND_INTERVAL ms
+  const now = Date.now();
+  const currentPos = { x: pos.x, y: pos.y };
+
+  if (lastSentPoint && now - lastSendTime >= SEND_INTERVAL) {
+    socket.emit(
+      "draw",
+      {
+        id: session.id,
+        color: colorString,
+        from: lastSentPoint,
+        to: currentPos,
+        size: brushThickness,
+        tool,
+      },
+      (response: { ok: boolean; id: string }) => {
+        if (!response.ok && response.id === session.id) {
+          logOutUser(loginModal, logoutButton, session, socket);
+        }
+      }
+    );
+    lastSendTime = now;
+    lastSentPoint = currentPos;
+  } else if (!lastSentPoint) {
+    lastSentPoint = currentPos;
+  }
+
+  // Update lastPoint
+  lastPoint = currentPos;
+}
+
+export function resetDrawState() {
+  lastPoint = null;
+  lastSentPoint = null;
 }
 
 export function initInput(

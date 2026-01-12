@@ -3,7 +3,8 @@ import {
   createLog,
   displayConnectedUsers,
   draw,
-  drawEllipse,
+  drawStroke,
+  resetDrawState,
   drawGridCanavas,
   editColor,
   initInput,
@@ -13,7 +14,7 @@ import {
   setPosition,
 } from "./helpers";
 import "./style.scss";
-import type { Color, Shape, Tool, TwitchResponseUser, User } from "./types";
+import type { Color, Stroke, Tool, TwitchResponseUser, User } from "./types";
 import type { Socket } from "socket.io-client";
 
 // SOURCE : https://github.com/AnshikaG0219/web-paint-final
@@ -180,7 +181,7 @@ socket.on("imageData", ({ src }) => {
   }
 });
 
-socket.on("draw", (ellipse: Shape) => drawEllipse(ellipse, session, ctx));
+socket.on("draw", (stroke: Stroke) => drawStroke(stroke, session, ctx));
 
 /**
  * CANVAS
@@ -222,10 +223,19 @@ if (canvas) {
     });
   });
 
-  canvas.addEventListener("mouseenter", (e: MouseEvent) => {
-    setPosition(e, pos, socket);
+  canvas.addEventListener("mouseup", () => {
+    resetDrawState();
   });
-  canvas.addEventListener("touchend", (e: TouchEvent) => {
+
+  canvas.addEventListener("mouseleave", () => {
+    resetDrawState();
+  });
+
+  canvas.addEventListener("touchend", () => {
+    resetDrawState();
+  });
+
+  canvas.addEventListener("mouseenter", (e: MouseEvent) => {
     setPosition(e, pos, socket);
   });
 }
