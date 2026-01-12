@@ -21,6 +21,10 @@ services:
     restart: unless-stopped
     networks:
       - paint-network
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/dist
 # ========================================
 # Network Configuration
 # ========================================

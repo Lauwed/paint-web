@@ -3,14 +3,14 @@
 # Paint Application
 # ========================================
 
-FROM node:alpine3.23 AS base
+FROM node:24-slim AS base
 
 # Set working directory
 WORKDIR /app
 
 # Create non-root user for security
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001 -G nodejs && \
+RUN groupadd --gid 1001 nodejs && \
+    useradd --uid 1001 --gid nodejs --shell /bin/bash --create-home nodejs && \
     chown -R nodejs:nodejs /app
 
 # ========================================
@@ -21,9 +21,8 @@ FROM base AS build-deps
 # Copy package files
 COPY package*.json ./
 
-# Create necessary directories and set permissions
-RUN mkdir -p /app/node_modules/.vite && \
-    chown -R nodejs:nodejs /app
+# Install dependencies
+RUN npm install
 
 # ========================================
 # Development Stage
@@ -39,6 +38,7 @@ COPY . .
 
 # Ensure all directories have proper permissions
 RUN mkdir -p /app/node_modules/.vite && \
+    mkdir -p /app/dist && \
     chown -R nodejs:nodejs /app && \
     chmod -R 755 /app
 
@@ -48,5 +48,5 @@ USER nodejs
 # Expose ports
 EXPOSE 5001
 
-# Start development server
-CMD ["npm", "run", "start"]
+# Start development server with watch
+CMD ["bash", "-c", "npm run watch & npm run start & wait -n"]
