@@ -56,16 +56,16 @@ socket.on("errorBadUsername", () => {
   if (errorUsername)
     errorUsername.innerHTML = "Mauvais nom d'utilisateur.ice (:";
 });
-socket.on("imageData", ({ src }) => {
-  if (ctx) {
+socket.on("imageData", ({src})=>{
+  if(ctx){
     const img = new Image();
     img.src = src;
-    img.onload = function () {
-      ctx.globalCompositeOperation = "source-over";
-      ctx.drawImage(img, 0, 0);
+    img.onload = function(){
+      ctx.globalCompositeOperation = "source-over"
+      ctx.drawImage(img,0,0);
     };
   }
-});
+})
 
 socket.on("draw", (ellipse: Shape) => drawEllipse(ellipse, session, ctx));
 
