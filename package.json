@@ -4,7 +4,8 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "build": "tsc && npx prettier . --write && vite build --watch",
+    "watch": "tsc && npx prettier . --write && vite build --watch",
+    "build": "tsc && vite build",
     "start": "node index.js",
     "prepare": "husky"
   },
