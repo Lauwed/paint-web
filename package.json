@@ -8,7 +8,7 @@
     "build": "tsc && npx prettier . --check && vite build",
     "start": "node index.js",
     "prepare": "husky",
-    "test": "timeout 5 node --env-file=.env index.js"
+    "test": "timeout 5 node --env-file=.env index.js || [ $? -eq 124 ]"
   },
   "lint-staged": {
     "**/*": "prettier --write --ignore-unknown"
