@@ -91,7 +91,7 @@ export function drawLine(
     context.globalCompositeOperation = "destination-out";
   }
 
-  // If from == true, draw only a point.
+  // If from == to, draw only a point.
   if (from.x === to.x && from.y === to.y) {
     context.fillStyle = color;
     context.arc(from.x, from.y, size / 2, 0, Math.PI * 2);
@@ -226,7 +226,11 @@ export function draw(
 
   setPosition(e, pos, socket);
 
-  const colorString = getColor(session.color.h, session.color.s, session.color.l);
+  const colorString = getColor(
+    session.color.h,
+    session.color.s,
+    session.color.l
+  );
 
   // Draw locally
   if (previousPoint) {

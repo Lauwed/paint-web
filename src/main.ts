@@ -201,8 +201,6 @@ const canvasContainer: HTMLElement | null =
 const brushCursor: HTMLElement | null = document.querySelector("#brush-cursor");
 const ctx = canvas?.getContext("2d") || null;
 const ctxGrid = canvasGrid?.getContext("2d") || null;
-const canvasContainer: HTMLElement | null =
-  document.getElementById("canvas-container");
 
 function updateBrushCursorSize() {
   if (brushCursor) {
