@@ -1,0 +1,30 @@
+# ========================================
+# Docker Compose Configuration
+# Modern Node.js Todo Application
+# ========================================
+
+services:
+  # ========================================
+  # Development Service
+  # ========================================
+  app-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: paint-dev
+    ports:
+      - "5001:5001"
+    environment:
+      NODE_ENV: development
+      PORT: 5001
+    restart: unless-stopped
+    networks:
+      - paint-network
+# ========================================
+# Network Configuration
+# ========================================
+networks:
+  paint-network:
+    name: paint-network
+    driver: bridge
