@@ -15,7 +15,9 @@ const ctx = canvas.getContext("2d");
 
 const imageFilename = 'image.png'
 
-let imageSrc,lastImageDataURITimestamp,lastDrawTimestamp
+let imageSrc;
+let lastImageDataURITimestamp = Date.now();
+let lastDrawTimestamp = Date.now();
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -61,7 +63,6 @@ app.get("/", (_, res) => {
 });
 
 io.on("connection", async (socket) => {
-  let start = Date.now();
   if(lastDrawTimestamp>lastImageDataURITimestamp) {
     imageSrc = canvas.toDataURL()
     lastImageDataURITimestamp = Date.now();
@@ -69,7 +70,6 @@ io.on("connection", async (socket) => {
   } else {
     socket.emit("imageData", { src: imageSrc });
   }
-  console.log(Date.now()-start);
 
   // When user logged in
   socket.on("userLogged", (user) => {
@@ -128,7 +128,6 @@ server.listen(process.env.PORT || 5001, () => {
 });
 
 async function draw(ellipse) {
-  let start = Date.now();
   lastDrawTimestamp = Date.now();
   ctx.beginPath(); // begin the drawing path
   ctx.fillStyle = ellipse.color; // hex color of line
@@ -144,7 +143,6 @@ async function draw(ellipse) {
     ellipse.size,
     ellipse.size
   );
-  console.log(Date.now()-start);
 }
 
 
@@ -154,37 +152,32 @@ async function draw(ellipse) {
 
 // only works when there is no task running
 // because we have a server always listening port, this handler will NEVER execute
-process.on("beforeExit", async (code) => {
-  console.log("Process beforeExit event with code: ", code);
+process.on("beforeExit", async () => {
   await saveImage()
 });
 
 // only works when the process normally exits
 // on windows, ctrl-c will not trigger this handler (it is unnormal)
 // unless you listen on 'SIGINT'
-process.on("exit", async (code) => {
-  console.log("Process exit event with code: prout ", code);
+process.on("exit", async () => {
   await saveImage()
 });
 
 // just in case some user like using "kill"
 process.on("SIGTERM", async () => {
-  console.log(`Process ${process.pid} received a SIGTERM signal`);
   await saveImage()
   process.exit(0);
 });
 
 // catch ctrl-c, so that event 'exit' always works
 process.on("SIGINT", async () => {
-  console.log(`Process ${process.pid} has been interrupted`);
   await saveImage()
   process.exit(0);
 });
 
 // what about errors
 // try remove/comment this handler, 'exit' event still works
-process.on("uncaughtException", async (err) => {
-  console.log(`Uncaught Exception: ${err.message}`);
+process.on("uncaughtException", async () => {
   await saveImage()
   process.exit(1);
 });
