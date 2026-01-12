@@ -97,10 +97,38 @@
         </div>
 
         <!-- Logs Modal -->
-        <dialog class="logs" id="logs">
-          <button class="logs__close" autofocus>Close</button>
+        <dialog class="logs window" id="logs">
+          <header class="login__header title-bar">
+            <div class="title-bar-text flex items-center">
+              <img width="20" height="20" src="/windows.png" /> Log In
+            </div>
 
-          <ul id="logs-list"></ul>
+            <div class="title-bar-controls">
+              <button aria-label="Minimize" disabled></button>
+              <button aria-label="Maximize" disabled></button>
+              <button aria-label="Close" autofocus class="logs__close"></button>
+            </div>
+          </header>
+
+          <div class="window-body logs__container">
+            <table class="logs__list">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>User</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+
+              <tbody id="logs-list"></tbody>
+            </table>
+          </div>
+
+          <div class="status-bar">
+            <p class="status-bar-field">Press F1 for help</p>
+            <p class="status-bar-field">Slide 1</p>
+            <p class="status-bar-field">CPU Usage: 14%</p>
+          </div>
         </dialog>
 
         <!-- Login Modal -->

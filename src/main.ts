@@ -1,14 +1,16 @@
 import {
-  getColor,
+  createLog,
   displayConnectedUsers,
   draw,
   drawEllipse,
-  setColor,
-  setPosition,
-  initInput,
+  drawGridCanavas,
   editColor,
   emitUserLogged,
-  emitUserLogout,
+  getColor,
+  initInput,
+  logOutUser,
+  setColor,
+  setPosition,
 } from "./helpers";
 import "./style.scss";
 import type { Color, Shape, Tool, User } from "./types";
@@ -22,16 +24,18 @@ import { io } from "socket.io-client";
 // - Le menu en mode Easter egg
 // - limit to brush size
 
-let socket = io();
+const socket = io();
 let connectedUsers: User[] = [];
 
 let session: User | null = null;
 let currentWindowWidth: number;
 
+const canvasSize = 2048;
+
 // Log in user
 socket.on("userLogged", (user: User, connected: User[]) => {
   if ((session === null || user.id !== session.id) && logs) {
-    logs.innerHTML += `<li>${user.username} a rejoint la partie !</li>`;
+    logs.insertBefore(createLog(user, "Connexion"), logs.children[0]);
   } else {
     session = user;
   }
@@ -42,7 +46,7 @@ socket.on("userLogged", (user: User, connected: User[]) => {
 // log out user
 socket.on("userLogout", (user: User, connected: User[]) => {
   if ((session === null || user.id !== session.id) && logs)
-    logs.innerHTML += `<li>${user.username} a quitté la partie !</li>`;
+    logs.insertBefore(createLog(user, "Déconnexion"), logs.children[0]);
 
   connectedUsers = connected;
   displayConnectedUsers(connectedUsers, online);
@@ -58,7 +62,7 @@ socket.on("draw", (ellipse: Shape) => drawEllipse(ellipse, session, ctx));
 /**
  * USER COLOR
  */
-let root = document.documentElement;
+const root = document.documentElement;
 
 const color: Color = {
   l: 50,
@@ -87,11 +91,6 @@ if (localStorage) {
   color.h = session.hue;
   setColor(color, root, true);
 
-  // log
-  if (logs) {
-    logs.innerHTML += `<li>Welcome back ${session.username}.</li>`;
-  }
-
   // Socket IO
   emitUserLogged(session, socket);
 } else {
@@ -112,7 +111,7 @@ if (localStorage) {
         const form: HTMLFormElement = e.target as HTMLFormElement;
         const usernameInput: HTMLInputElement | null =
           form.querySelector("input#username");
-        const username = usernameInput?.value.trim();
+        const username = usernameInput?.value.replaceAll("\\p{C}", "").trim();
 
         if (username && username !== "") {
           session = {
@@ -129,9 +128,6 @@ if (localStorage) {
           loginModal.close();
           logoutButton.style.display = "inline-block";
 
-          // Log connected
-          logs.innerHTML += `<li>Bienvenue ${username}, tu as été correctement connecté.</li>`;
-
           // Socket IO
           emitUserLogged(session, socket);
         } else {
@@ -141,30 +137,15 @@ if (localStorage) {
   }
 }
 // Logout event listener
-logoutButton?.addEventListener("click", () => {
-  window.localStorage.removeItem("devgirlpaint");
-
-  // Display login form
-  loginModal?.showModal();
-  logoutButton.style.display = "none";
-
-  // Log connected
-  if (logs) {
-    logs.innerHTML += `<li>Bye bye, à bientôt !</li>`;
-  }
-
-  // Socket IO
-  emitUserLogout(session, socket);
-
-  // Null session
-  session = null;
-});
+logoutButton?.addEventListener("click", () =>
+  logOutUser(loginModal, logoutButton, session, socket)
+);
 
 /**
  * CANVAS
  */
 let brushThickness = 7;
-let pos = { x: 0, y: 0 };
+const pos = { x: 0, y: 0 };
 let tool: Tool = "BRUSH";
 const eraserButton = document.querySelector("#eraser");
 const brushButton = document.querySelector("#brush");
@@ -173,77 +154,34 @@ const brushButton = document.querySelector("#brush");
 const canvas: HTMLCanvasElement | null = document.querySelector("#canvas");
 const canvasGrid: HTMLCanvasElement | null =
   document.querySelector("#canvas-grid");
-let ctx = canvas?.getContext("2d") || null;
-let ctxGrid = canvasGrid?.getContext("2d") || null;
+const ctx = canvas?.getContext("2d") || null;
+const ctxGrid = canvasGrid?.getContext("2d") || null;
 
-// Desktop
 if (canvas) {
-  canvas.addEventListener("mousemove", (e: MouseEvent) => {
-    draw(
-      e,
-      session,
-      ctx,
-      color,
-      socket,
-      tool,
-      pos,
-      brushThickness,
-      loginModal,
-      logoutButton,
-      logs
-    );
+  const events = ["mousemove", "mousedown", "touchstart", "touchmove"] as const;
+
+  events.forEach((event) => {
+    canvas.addEventListener(event, (e: MouseEvent | TouchEvent) => {
+      draw(
+        e,
+        session,
+        ctx,
+        color,
+        socket,
+        tool,
+        pos,
+        brushThickness,
+        loginModal,
+        logoutButton
+      );
+    });
   });
-  canvas.addEventListener("mousedown", (e: MouseEvent) => {
-    draw(
-      e,
-      session,
-      ctx,
-      color,
-      socket,
-      tool,
-      pos,
-      brushThickness,
-      loginModal,
-      logoutButton,
-      logs
-    );
-  });
+
   canvas.addEventListener("mouseenter", (e: MouseEvent) => {
     setPosition(e, pos, socket);
   });
-  // Mobile
-  canvas.addEventListener("touchmove", (e: TouchEvent) => {
-    draw(
-      e,
-      session,
-      ctx,
-      color,
-      socket,
-      tool,
-      pos,
-      brushThickness,
-      loginModal,
-      logoutButton,
-      logs
-    );
-  });
   canvas.addEventListener("touchend", (e: TouchEvent) => {
     setPosition(e, pos, socket);
-  });
-  canvas.addEventListener("touchstart", (e: TouchEvent) => {
-    draw(
-      e,
-      session,
-      ctx,
-      color,
-      socket,
-      tool,
-      pos,
-      brushThickness,
-      loginModal,
-      logoutButton,
-      logs
-    );
   });
 }
 
@@ -258,9 +196,17 @@ document.querySelectorAll(".properties__item").forEach((item) => {
       // Init
       initInput(input, value, brushThickness, color.l, color.s);
 
-      input.addEventListener("input", () =>
-        editColor(input, value, color, brushThickness, root)
-      );
+      input.addEventListener("input", () => {
+        const { thickness } = editColor(
+          input,
+          value,
+          color,
+          brushThickness,
+          root
+        );
+
+        brushThickness = thickness;
+      });
     }
   }
 });
@@ -290,15 +236,14 @@ document.querySelector("#save")?.addEventListener("click", () => {
 window.addEventListener("resize", resize);
 function resize() {
   if (canvas && ctx && canvasGrid) {
-    const displayWidth = canvas.clientWidth;
-    const displayHeight = canvas.clientHeight;
-
     const data = ctx.getImageData(0, 0, currentWindowWidth, currentWindowWidth);
-    canvas.width = displayWidth;
-    canvasGrid.width = displayWidth;
+    canvas.width = canvasSize;
+    canvasGrid.width = canvasSize;
 
-    canvas.height = displayHeight;
-    canvasGrid.height = displayHeight;
+    canvas.height = canvasSize;
+    canvasGrid.height = canvasSize;
+
+    drawGridCanavas(ctxGrid, canvas);
 
     if (data) ctx.putImageData(data, 0, 0);
 
@@ -310,57 +255,31 @@ function resize() {
 currentWindowWidth = window.innerWidth;
 
 if (canvas && canvasGrid && ctxGrid) {
-  canvas.width = currentWindowWidth * 2;
-  canvasGrid.width = currentWindowWidth * 2;
+  canvas.width = canvasSize;
+  canvasGrid.width = canvasSize;
 
-  canvas.height = currentWindowWidth * 2;
-  canvasGrid.height = currentWindowWidth * 2;
+  canvas.height = canvasSize;
+  canvasGrid.height = canvasSize;
 
-  // draw a line every *step* pixels
-  const step = 50;
-  // set our styles
-  ctxGrid.save();
-  ctxGrid.strokeStyle = "gray"; // line colors
-  ctxGrid.lineWidth = 0.35;
-
-  // draw vertical from X to Height
-  for (let x = 0; x < canvas.clientWidth; x += step) {
-    // draw vertical line
-    ctxGrid.beginPath();
-    ctxGrid.moveTo(x, 0);
-    ctxGrid.lineTo(x, canvas.clientWidth);
-    ctxGrid.stroke();
-  }
-
-  // draw horizontal from Y to Width
-  for (let y = 0; y < canvas.clientHeight; y += step) {
-    // draw horizontal line
-    ctxGrid.beginPath();
-    ctxGrid.moveTo(0, y);
-    ctxGrid.lineTo(canvas.clientHeight, y);
-    ctxGrid.stroke();
-  }
-
-  // restore the styles from before this function was called
-  ctxGrid.restore();
-
-  const modalButtons: NodeListOf<HTMLButtonElement> =
-    document.querySelectorAll("button[data-modal]");
-  modalButtons.forEach((button) => {
-    const modal: HTMLDialogElement | null = document.querySelector(
-      `#${button.dataset.modal}`
-    );
-
-    if (modal) {
-      const closeModalButton = modal.querySelector("button[autofocus]");
-      console.log(modal);
-
-      button.addEventListener("click", () => {
-        modal.showModal();
-      });
-      closeModalButton?.addEventListener("click", () => {
-        modal.close();
-      });
-    }
-  });
+  drawGridCanavas(ctxGrid, canvas);
 }
+
+const modalButtons: NodeListOf<HTMLButtonElement> =
+  document.querySelectorAll("button[data-modal]");
+modalButtons.forEach((button) => {
+  const modal: HTMLDialogElement | null = document.querySelector(
+    `#${button.dataset.modal}`
+  );
+
+  if (modal) {
+    const closeModalButton = modal.querySelector("button[autofocus]");
+    console.log(modal);
+
+    button.addEventListener("click", () => {
+      modal.showModal();
+    });
+    closeModalButton?.addEventListener("click", () => {
+      modal.close();
+    });
+  }
+});
