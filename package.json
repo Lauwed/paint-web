@@ -5,7 +5,11 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc && npx prettier . --write && vite build --watch",
-    "start": "node index.js"
+    "start": "node index.js",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "**/*": "prettier --write --ignore-unknown"
   },
   "description": "Le Web Paint de la Dev Girl Society",
   "dependencies": {
@@ -22,6 +26,7 @@
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.0.0",
+    "husky": "^9.1.7",
     "prettier": "3.7.4",
     "sass": "^1.97.2",
     "typescript": "~5.9.3",
