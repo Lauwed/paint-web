@@ -1,0 +1,36 @@
+name: GitHub Actions Demo
+run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+on: [push]
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛎️ Checkout
+        uses: actions/checkout@v5
+
+      - name: 🏭 Use Node.js
+        uses: actions/setup-node@v4
+
+      - name: 📥 Install Web
+        run: npm install
+
+      - name: 👾 Audit Web
+        run: npm audit --audit-level=low
+
+      - name: 🔨 Build
+        run: npm run build
+
+  Server:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛎️ Checkout
+        uses: actions/checkout@v5
+
+      - name: 🏭 Use Node.js
+        uses: actions/setup-node@v4
+
+      - name: 📥 Install Web
+        run: npm install
+
+      - name: 🎮 Start server
+        run: npm run test
