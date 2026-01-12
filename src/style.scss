@@ -31,9 +31,8 @@
   --radio-dot-width: 4px;
   --radio-dot-top: calc(var(--radio-width) / 2 - var(--radio-dot-width) / 2);
   --radio-dot-left: calc(
-    -1 * (var(--radio-total-width-precalc)) + var(--radio-width) / 2 - var(
-        --radio-dot-width
-      ) / 2
+    -1 * (var(--radio-total-width-precalc)) + var(--radio-width) /
+      2 - var(--radio-dot-width) / 2
   );
 
   --checkbox-total-width-precalc: var(--checkbox-width) +
@@ -46,25 +45,25 @@
 
   /* Borders */
   --border-width: 1px;
-  --border-raised-outer: inset -1px -1px var(--window-frame),
-    inset 1px 1px var(--button-highlight);
-  --border-raised-inner: inset -2px -2px var(--button-shadow),
-    inset 2px 2px var(--button-face);
-  --border-sunken-outer: inset -1px -1px var(--button-highlight),
-    inset 1px 1px var(--window-frame);
-  --border-sunken-inner: inset -2px -2px var(--button-face),
-    inset 2px 2px var(--button-shadow);
+  --border-raised-outer:
+    inset -1px -1px var(--window-frame), inset 1px 1px var(--button-highlight);
+  --border-raised-inner:
+    inset -2px -2px var(--button-shadow), inset 2px 2px var(--button-face);
+  --border-sunken-outer:
+    inset -1px -1px var(--button-highlight), inset 1px 1px var(--window-frame);
+  --border-sunken-inner:
+    inset -2px -2px var(--button-face), inset 2px 2px var(--button-shadow);
 
   /* Window borders flip button-face and button-highlight */
-  --border-window-outer: inset -1px -1px var(--window-frame),
-    inset 1px 1px var(--button-face);
-  --border-window-inner: inset -2px -2px var(--button-shadow),
-    inset 2px 2px var(--button-highlight);
+  --border-window-outer:
+    inset -1px -1px var(--window-frame), inset 1px 1px var(--button-face);
+  --border-window-inner:
+    inset -2px -2px var(--button-shadow), inset 2px 2px var(--button-highlight);
 
   /* Field borders (checkbox, input, etc) flip window-frame and button-shadow */
-  --border-field: inset -1px -1px var(--button-highlight),
-    inset 1px 1px var(--button-shadow), inset -2px -2px var(--button-face),
-    inset 2px 2px var(--window-frame);
+  --border-field:
+    inset -1px -1px var(--button-highlight), inset 1px 1px var(--button-shadow),
+    inset -2px -2px var(--button-face), inset 2px 2px var(--window-frame);
 }
 
 * {
@@ -215,8 +214,15 @@ dialog {
   width: 100%;
   border-right: 1px solid grey;
   border-bottom: 1px solid grey;
-  box-shadow: 1px 0 0 white, 1px 1px 0 white, 0 1px 0 white, -1px 0 0 darkgrey,
-    -1px -1px 0 darkgrey, 0 -1px 0 darkgrey, -1px 1px 0 white, 1px -1px darkgrey;
+  box-shadow:
+    1px 0 0 white,
+    1px 1px 0 white,
+    0 1px 0 white,
+    -1px 0 0 darkgrey,
+    -1px -1px 0 darkgrey,
+    0 -1px 0 darkgrey,
+    -1px 1px 0 white,
+    1px -1px darkgrey;
 
   &__grid {
     background-color: white;
