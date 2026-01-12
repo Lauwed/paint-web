@@ -133,10 +133,6 @@ server.listen(port, () => {
 async function draw(stroke) {
   lastDrawTimestamp = Date.now();
   ctx.beginPath();
-  ctx.strokeStyle = stroke.color;
-  ctx.lineWidth = stroke.size;
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
 
   if (stroke.tool === "BRUSH") {
     ctx.globalCompositeOperation = "source-over";
@@ -144,9 +140,20 @@ async function draw(stroke) {
     ctx.globalCompositeOperation = "destination-out";
   }
 
-  ctx.moveTo(stroke.from.x, stroke.from.y);
-  ctx.lineTo(stroke.to.x, stroke.to.y);
-  ctx.stroke();
+  // If from == to, draw a point
+  if (stroke.from.x === stroke.to.x && stroke.from.y === stroke.to.y) {
+    ctx.fillStyle = stroke.color;
+    ctx.arc(stroke.from.x, stroke.from.y, stroke.size / 2, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.strokeStyle = stroke.color;
+    ctx.lineWidth = stroke.size;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.moveTo(stroke.from.x, stroke.from.y);
+    ctx.lineTo(stroke.to.x, stroke.to.y);
+    ctx.stroke();
+  }
 }
 
 // ----------------------------

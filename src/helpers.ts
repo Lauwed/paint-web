@@ -74,7 +74,7 @@ export const createLog = (user: User, action: string) => {
   return logRow;
 };
 
-// Draw stroke instead point
+// Draw stroke or point
 export function drawLine(
   context: CanvasRenderingContext2D,
   from: Position,
@@ -84,10 +84,6 @@ export function drawLine(
   tool: Tool
 ) {
   context.beginPath();
-  context.strokeStyle = color;
-  context.lineWidth = size;
-  context.lineCap = "round";
-  context.lineJoin = "round";
 
   if (tool === "BRUSH") {
     context.globalCompositeOperation = "source-over";
@@ -95,9 +91,20 @@ export function drawLine(
     context.globalCompositeOperation = "destination-out";
   }
 
-  context.moveTo(from.x, from.y);
-  context.lineTo(to.x, to.y);
-  context.stroke();
+  // If from == true, draw only a point.
+  if (from.x === to.x && from.y === to.y) {
+    context.fillStyle = color;
+    context.arc(from.x, from.y, size / 2, 0, Math.PI * 2);
+    context.fill();
+  } else {
+    context.strokeStyle = color;
+    context.lineWidth = size;
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.moveTo(from.x, from.y);
+    context.lineTo(to.x, to.y);
+    context.stroke();
+  }
 }
 
 // Draw stroke fort socket
@@ -240,7 +247,28 @@ export function draw(
   const now = Date.now();
   const currentPos = { x: pos.x, y: pos.y };
 
-  if (lastSentPoint && now - lastSendTime >= SEND_INTERVAL) {
+  if (!lastSentPoint) {
+    // If no start point send a point ( from == to )
+    socket.emit(
+      "draw",
+      {
+        id: session.id,
+        color: colorString,
+        from: currentPos,
+        to: currentPos,
+        size: brushThickness,
+        tool,
+      },
+      (response: { ok: boolean; id: string }) => {
+        if (!response.ok && response.id === session.id) {
+          logOutUser(loginModal, logoutButton, session, socket);
+        }
+      }
+    );
+    lastSendTime = now;
+    lastSentPoint = currentPos;
+  } else if (now - lastSendTime >= SEND_INTERVAL) {
+    // If start point and past time >= SEND_INTERVAL, send the line
     socket.emit(
       "draw",
       {
@@ -258,8 +286,6 @@ export function draw(
       }
     );
     lastSendTime = now;
-    lastSentPoint = currentPos;
-  } else if (!lastSentPoint) {
     lastSentPoint = currentPos;
   }
 
