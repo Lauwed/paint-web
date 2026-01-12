@@ -13,7 +13,7 @@ import { createWriteStream, existsSync } from "node:fs";
 const canvas = createCanvas(2048, 2048);
 const ctx = canvas.getContext("2d");
 
-const imageFilename = 'image.png'
+const imageFilename = "image.png";
 
 let imageSrc;
 let lastImageDataURITimestamp = Date.now();
@@ -21,14 +21,16 @@ let lastDrawTimestamp = Date.now();
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-if(existsSync(join(__dirname, imageFilename))) {
-  readFile(join(__dirname, imageFilename), (err, png)=>{
-    if (err) throw err
-    const img = new Image()
-    img.onload = () => ctx.drawImage(img, 0, 0)
-    img.onerror = err => { throw err }
-    img.src = png
-  })
+if (existsSync(join(__dirname, imageFilename))) {
+  readFile(join(__dirname, imageFilename), (err, png) => {
+    if (err) throw err;
+    const img = new Image();
+    img.onload = () => ctx.drawImage(img, 0, 0);
+    img.onerror = (err) => {
+      throw err;
+    };
+    img.src = png;
+  });
 }
 
 const app = express();
@@ -63,8 +65,8 @@ app.get("/", (_, res) => {
 });
 
 io.on("connection", async (socket) => {
-  if(lastDrawTimestamp>lastImageDataURITimestamp) {
-    imageSrc = canvas.toDataURL()
+  if (lastDrawTimestamp > lastImageDataURITimestamp) {
+    imageSrc = canvas.toDataURL();
     lastImageDataURITimestamp = Date.now();
     socket.emit("imageData", { src: imageSrc });
   } else {
@@ -145,7 +147,6 @@ async function draw(ellipse) {
   );
 }
 
-
 // ----------------------------
 // - Saving image before exit -
 // ----------------------------
@@ -153,32 +154,32 @@ async function draw(ellipse) {
 // only works when there is no task running
 // because we have a server always listening port, this handler will NEVER execute
 process.on("beforeExit", async () => {
-  await saveImage()
+  await saveImage();
 });
 
 // only works when the process normally exits
 // on windows, ctrl-c will not trigger this handler (it is unnormal)
 // unless you listen on 'SIGINT'
 process.on("exit", async () => {
-  await saveImage()
+  await saveImage();
 });
 
 // just in case some user like using "kill"
 process.on("SIGTERM", async () => {
-  await saveImage()
+  await saveImage();
   process.exit(0);
 });
 
 // catch ctrl-c, so that event 'exit' always works
 process.on("SIGINT", async () => {
-  await saveImage()
+  await saveImage();
   process.exit(0);
 });
 
 // what about errors
 // try remove/comment this handler, 'exit' event still works
 process.on("uncaughtException", async () => {
-  await saveImage()
+  await saveImage();
   process.exit(1);
 });
 
