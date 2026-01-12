@@ -105,19 +105,19 @@ io.on("connection", async (socket) => {
   });
 
   // When user draw
-  socket.on("draw", (ellipse, callback) => {
-    const user = connectedUsers.find((u) => u.id === ellipse.id);
+  socket.on("draw", (stroke, callback) => {
+    const user = connectedUsers.find((u) => u.id === stroke.id);
 
     if (user && user.drawNumber < 2000) {
       user.drawNumber++;
 
-      io.emit("draw", ellipse);
+      io.emit("draw", stroke);
 
-      callback({ ok: true, id: ellipse.id });
+      callback({ ok: true, id: stroke.id });
 
-      draw(ellipse);
+      draw(stroke);
     } else {
-      callback({ ok: false, id: ellipse.id });
+      callback({ ok: false, id: stroke.id });
     }
   });
 
@@ -130,22 +130,23 @@ server.listen(port, () => {
   console.log("listening on *:" + port);
 });
 
-async function draw(ellipse) {
+async function draw(stroke) {
   lastDrawTimestamp = Date.now();
-  ctx.beginPath(); // begin the drawing path
-  ctx.fillStyle = ellipse.color; // hex color of line
-  if (ellipse.tool === "BRUSH") {
+  ctx.beginPath();
+  ctx.strokeStyle = stroke.color;
+  ctx.lineWidth = stroke.size;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  if (stroke.tool === "BRUSH") {
     ctx.globalCompositeOperation = "source-over";
-  } else if (ellipse.tool === "ERASER") {
+  } else if (stroke.tool === "ERASER") {
     ctx.globalCompositeOperation = "destination-out";
   }
 
-  ctx.fillRect(
-    ellipse.x - ellipse.size / 2,
-    ellipse.y - ellipse.size / 2,
-    ellipse.size,
-    ellipse.size
-  );
+  ctx.moveTo(stroke.from.x, stroke.from.y);
+  ctx.lineTo(stroke.to.x, stroke.to.y);
+  ctx.stroke();
 }
 
 // ----------------------------
