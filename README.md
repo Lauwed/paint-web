@@ -32,6 +32,41 @@ npm run watch
 npm run start
 ```
 
+## Docker
+
+### Docker usage
+
+You will need to have docker installed.
+
+1. Build the Docker image
+
+```
+docker build --no-cache --tag paint:latest .
+```
+
+2. Run the Docker container
+
+```
+docker run -p 5001:5001 paint
+```
+
+### Docker Compose
+
+You will need to have docker and docker-compose installed.
+
+1. Build and run the application
+
+```
+docker compose up
+# docker compose up -d  (detach mode)
+```
+
+2. Stop the application
+
+```
+docker compose down
+```
+
 ## Environment
 
 Here, ViteJS is used as a bundler tool, only to build and compress the files, it is not used to run a dev server.

@@ -36,6 +36,7 @@ if (existsSync(join(__dirname, imageFilename))) {
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
+const port = process.env.PORT || 5001;
 
 let connectedUsers = [];
 
@@ -125,8 +126,8 @@ io.on("connection", async (socket) => {
   });
 });
 
-server.listen(process.env.PORT || 5001, () => {
-  console.log("listening on *:" + process.env.PORT || 5001);
+server.listen(port, () => {
+  console.log("listening on *:" + port);
 });
 
 async function draw(ellipse) {
