@@ -10,9 +10,6 @@
     "prepare": "husky",
     "test": "timeout 5 node --env-file=.env index.js || [ $? -eq 124 ]"
   },
-  "lint-staged": {
-    "**/*": "prettier . --check"
-  },
   "description": "Le Web Paint de la Dev Girl Society",
   "dependencies": {
     "canvas": "^3.2.1",
