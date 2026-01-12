@@ -79,7 +79,15 @@ export function drawEllipse(
 ) {
   if ((session === null || ellipse.id !== session.id) && context) {
     context.beginPath(); // begin the drawing path
+
     context.fillStyle = ellipse.color;
+
+    if (ellipse.tool === "BRUSH") {
+      context.globalCompositeOperation = "source-over";
+    } else if (ellipse.tool === "ERASER") {
+      context.globalCompositeOperation = "destination-out";
+    }
+
     context.fillRect(
       ellipse.x - ellipse.size / 2,
       ellipse.y - ellipse.size / 2,
@@ -202,6 +210,7 @@ export function draw(
       tool,
     },
     (response: { ok: boolean; id: string }) => {
+      console.log(response);
       if (!response.ok && response.id === session.id) {
         logOutUser(loginModal, logoutButton, session, socket);
       }
