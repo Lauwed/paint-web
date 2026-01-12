@@ -107,7 +107,7 @@ io.on("connection", async (socket) => {
   socket.on("draw", (ellipse, callback) => {
     const user = connectedUsers.find((u) => u.id === ellipse.id);
 
-    if (user && user.drawNumber < Infinity) {
+    if (user && user.drawNumber < 2000) {
       user.drawNumber++;
 
       io.emit("draw", ellipse);
