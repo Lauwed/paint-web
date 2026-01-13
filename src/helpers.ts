@@ -1,10 +1,6 @@
 import type { Socket } from "socket.io-client";
 import type { Color, Position, Shape, Tool, User } from "./types";
 
-export const emitUserLogged = (u: User | null, socket: Socket) => {
-  if (u) socket.emit("userLogged", u);
-};
-
 export const emitUserLogout = (u: User | null, socket: Socket) => {
   if (u) socket.emit("userLogout", u);
 };
@@ -16,7 +12,7 @@ export const getUserHTML = (user: User) => {
   return `
     <li class="online__user" data-id="${user.id}">
       <span class="online__user__color" style="background-color: ${getColor(
-        user.hue,
+        user.color.h,
         50,
         50
       )}"></span>
@@ -168,7 +164,6 @@ export function draw(
   e: MouseEvent | TouchEvent,
   session: User | null,
   context: CanvasRenderingContext2D | null,
-  color: Color,
   socket: Socket,
   tool: Tool,
   pos: Position,
@@ -184,7 +179,11 @@ export function draw(
   if (e instanceof MouseEvent && e.buttons !== 1) return;
 
   context.beginPath(); // begin the drawing path
-  context.fillStyle = getColor(color.h, color.s, color.l); // hex color of line
+  context.fillStyle = getColor(
+    session.color.h,
+    session.color.s,
+    session.color.l
+  ); // hex color of line
   if (tool === "BRUSH") {
     context.globalCompositeOperation = "source-over";
   } else if (tool === "ERASER") {
@@ -203,14 +202,13 @@ export function draw(
     "draw",
     {
       id: session.id,
-      color: getColor(color.h, color.s, color.l),
+      color: getColor(session.color.h, session.color.s, session.color.l),
       x: pos.x,
       y: pos.y,
       size: brushThickness,
       tool,
     },
     (response: { ok: boolean; id: string }) => {
-      console.log(response);
       if (!response.ok && response.id === session.id) {
         logOutUser(loginModal, logoutButton, session, socket);
       }
@@ -254,4 +252,15 @@ export const editColor = (
     color,
     thickness: brushThickness,
   };
+};
+
+export const isErrorWithMessage = (
+  error: unknown
+): error is { message: string } => {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof (error as Record<string, string>).message === "string"
+  );
 };

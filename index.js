@@ -1,4 +1,3 @@
-import sanitizeHtml from "sanitize-html";
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
@@ -7,8 +6,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { createCanvas, Image } from "canvas";
-import { readFile } from "node:fs/promises";
 import { createWriteStream, existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 
 const canvas = createCanvas(2048, 2048);
 const ctx = canvas.getContext("2d");
@@ -46,13 +45,16 @@ function removeUserWithID(arr, id) {
   return arr;
 }
 
-function isUserAlreadyConnected(user) {
-  return connectedUsers.some((u) => u.id === user.id);
+function isUserAlreadyConnected(id) {
+  return connectedUsers.some((u) => u.id === id);
+}
+
+function getConnectedUser(id) {
+  return connectedUsers.find((u) => u.id === id);
 }
 
 setInterval(() => {
   if (connectedUsers.length > 0) {
-    // console.log("draw number reset", connectedUsers);
     connectedUsers = connectedUsers.map((u) => ({ ...u, drawNumber: 0 }));
   }
 }, 10000);
@@ -74,25 +76,23 @@ io.on("connection", async (socket) => {
   }
 
   // When user logged in
-  socket.on("userLogged", (user) => {
-    const username = sanitizeHtml(user.username).trim();
-
-    if (!username || username === "") {
-      io.emit("errorBadUsername");
-      return;
-    }
-
-    const newUser = {
+  socket.on("userLogged", (user, callback) => {
+    let newUser = {
       ...user,
-      username: username,
       drawNumber: 0,
     };
-    console.log(connectedUsers);
+    console.log("connected", connectedUsers);
 
-    if (!isUserAlreadyConnected(newUser)) connectedUsers.push(newUser);
+    if (!isUserAlreadyConnected(newUser.id)) connectedUsers.push(newUser);
+    else {
+      newUser = getConnectedUser(newUser.id);
+      newUser.username = user.username; // If user changed their username on Twitch
+    }
 
-    socket.user = user;
-    io.emit("userLogged", { ...newUser, socketId: socket.id }, connectedUsers);
+    socket.user = newUser;
+
+    callback({ ok: true, user: newUser, connected: connectedUsers });
+
     socket.join("paint");
   });
 

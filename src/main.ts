@@ -1,3 +1,4 @@
+import { io } from "socket.io-client";
 import {
   createLog,
   displayConnectedUsers,
@@ -5,16 +6,15 @@ import {
   drawEllipse,
   drawGridCanavas,
   editColor,
-  emitUserLogged,
-  getColor,
   initInput,
+  isErrorWithMessage,
   logOutUser,
   setColor,
   setPosition,
 } from "./helpers";
 import "./style.scss";
-import type { Color, Shape, Tool, User } from "./types";
-import { io } from "socket.io-client";
+import type { Color, Shape, Tool, TwitchResponseUser, User } from "./types";
+import type { Socket } from "socket.io-client";
 
 // SOURCE : https://github.com/AnshikaG0219/web-paint-final
 
@@ -31,31 +31,144 @@ let session: User | null = null;
 let currentWindowWidth: number;
 
 const canvasSize = 2048;
+const root = document.documentElement;
 
-// Log in user
-socket.on("userLogged", (user: User, connected: User[]) => {
-  if ((session === null || user.id !== session.id) && logs) {
-    logs.insertBefore(createLog(user, "Connexion"), logs.children[0]);
-  } else {
-    session = user;
+/**
+ * SESSION DOM
+ */
+const logs: HTMLUListElement | null = document.querySelector("#logs-list");
+const online: HTMLUListElement | null = document.querySelector("#online-users");
+const loginModal: HTMLDialogElement | null = document.querySelector("#login");
+const logoutButton: HTMLButtonElement | null =
+  document.querySelector("#logout");
+const loginError: HTMLParagraphElement | null =
+  document.querySelector("#login-error");
+
+// Logout event listener
+logoutButton?.addEventListener("click", () =>
+  logOutUser(loginModal, logoutButton, session, socket)
+);
+
+// Login
+const emitUserLogged = (
+  u: User | null,
+  socket: Socket,
+  root: HTMLElement | null,
+  logs: HTMLUListElement | null,
+  connectedUsers: User[],
+  online: HTMLUListElement | null
+) => {
+  if (u) {
+    socket.emit(
+      "userLogged",
+      u,
+      (response: { ok: boolean; user: User; connected: User[] }) => {
+        if (response.ok && root) {
+          if ((u === null || response.user.id !== u.id) && logs) {
+            logs.insertBefore(
+              createLog(response.user, "Connexion"),
+              logs.children[0]
+            );
+          } else {
+            session = response.user;
+
+            setColor(response.user.color, root, true);
+          }
+
+          connectedUsers = response.connected;
+          displayConnectedUsers(connectedUsers, online);
+        }
+      }
+    );
+  }
+};
+
+// Twitch auth
+const access_token = new URLSearchParams(
+  document.location.hash.replace("#", "")
+).get("access_token");
+
+if (access_token) {
+  try {
+    const res = await fetch("https://api.twitch.tv/helix/users", {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+        "Client-Id": "bogukfbk1bpf9tgex1zan5xsew7nlj",
+      },
+    });
+    if (!res.ok || res.status !== 200) {
+      throw new Error("Login to Twitch failed");
+    }
+
+    const resData = await res.json();
+
+    const twitchData = resData.data;
+
+    if (twitchData.length > 0) {
+      const twitchUser: TwitchResponseUser = twitchData[0];
+
+      const { display_name: username, id } = twitchUser;
+
+      const newColor: Color = {
+        l: 50,
+        s: 50,
+        h: Math.random() * 360,
+      };
+
+      const newUser = {
+        username,
+        id,
+        color: newColor,
+      };
+
+      if (loginModal && logoutButton) {
+        // Hide login modal
+        loginModal.close();
+        logoutButton.style.display = "inline-block";
+      }
+
+      // Socket IO
+      emitUserLogged(newUser, socket, root, logs, connectedUsers, online);
+    }
+  } catch (error) {
+    if (loginModal && logoutButton && loginError) {
+      loginModal.showModal();
+      logoutButton.style.display = "none";
+
+      const errorMessage: string = isErrorWithMessage(error)
+        ? error.message
+        : String(error);
+
+      // Display error message
+      loginError.innerHTML = errorMessage;
+    }
+
+    console.error(error);
+  }
+} else {
+  if (loginModal && logoutButton) {
+    loginModal.showModal();
+    logoutButton.style.display = "none";
   }
 
-  connectedUsers = connected;
-  displayConnectedUsers(connectedUsers, online);
-});
+  const newColor: Color = {
+    l: 50,
+    s: 50,
+    h: Math.random() * 360,
+  };
+
+  setColor(newColor, root, true);
+}
+
 // log out user
 socket.on("userLogout", (user: User, connected: User[]) => {
-  if ((session === null || user.id !== session.id) && logs)
+  if ((session === null || user.id !== (session as User).id) && logs)
     logs.insertBefore(createLog(user, "Déconnexion"), logs.children[0]);
 
   connectedUsers = connected;
   displayConnectedUsers(connectedUsers, online);
 });
-// Error login
-socket.on("errorBadUsername", () => {
-  if (errorUsername)
-    errorUsername.innerHTML = "Mauvais nom d'utilisateur.ice (:";
-});
+
 socket.on("imageData", ({ src }) => {
   if (ctx) {
     const img = new Image();
@@ -68,88 +181,6 @@ socket.on("imageData", ({ src }) => {
 });
 
 socket.on("draw", (ellipse: Shape) => drawEllipse(ellipse, session, ctx));
-
-/**
- * USER COLOR
- */
-const root = document.documentElement;
-
-const color: Color = {
-  l: 50,
-  s: 50,
-  h: Math.random() * 360,
-};
-
-/**
- * SESSION
- */
-const logs: HTMLUListElement | null = document.querySelector("#logs-list");
-const online: HTMLUListElement | null = document.querySelector("#online-users");
-const loginModal: HTMLDialogElement | null = document.querySelector("#login");
-const logoutButton: HTMLButtonElement | null =
-  document.querySelector("#logout");
-const errorUsername: HTMLParagraphElement | null =
-  document.querySelector("#error-username");
-
-const localStorage = window.localStorage.getItem("devgirlpaint");
-// Check if local storage for paint exists
-if (localStorage) {
-  // If already login, retrieve session
-  session = JSON.parse(localStorage) as User;
-
-  // Set color
-  color.h = session.hue;
-  setColor(color, root, true);
-
-  // Socket IO
-  emitUserLogged(session, socket);
-} else {
-  // If logged out
-  // Display login form
-  if (loginModal && logoutButton && errorUsername && logs) {
-    loginModal.showModal();
-    logoutButton.style.display = "none";
-
-    setColor(color, root, true);
-
-    // form eventlistener
-    loginModal
-      .querySelector("form")
-      ?.addEventListener("submit", (e: SubmitEvent) => {
-        e.preventDefault();
-        errorUsername.innerHTML = "";
-        const form: HTMLFormElement = e.target as HTMLFormElement;
-        const usernameInput: HTMLInputElement | null =
-          form.querySelector("input#username");
-        const username = usernameInput?.value.replaceAll("\\p{C}", "").trim();
-
-        if (username && username !== "") {
-          session = {
-            username,
-            id: `${username}#${Math.random() * 4000}`,
-            hue: color.h,
-            color: getColor(color.h, color.s, color.l),
-          };
-
-          // Save dans le local storage
-          window.localStorage.setItem("devgirlpaint", JSON.stringify(session));
-
-          // Hide login modal
-          loginModal.close();
-          logoutButton.style.display = "inline-block";
-
-          // Socket IO
-          emitUserLogged(session, socket);
-        } else {
-          // TODO: Display error
-        }
-      });
-  }
-}
-// Logout event listener
-logoutButton?.addEventListener("click", () =>
-  logOutUser(loginModal, logoutButton, session, socket)
-);
 
 /**
  * CANVAS
@@ -176,7 +207,6 @@ if (canvas) {
         e,
         session,
         ctx,
-        color,
         socket,
         tool,
         pos,
@@ -201,8 +231,9 @@ document.querySelectorAll(".properties__item").forEach((item) => {
   const submenu = item.querySelector(".properties__item__submenu");
   if (submenu) {
     const input = submenu.querySelector("input");
-    if (input) {
+    if (input && session) {
       const value = submenu.querySelector("span");
+      const { color } = session as User;
       // Init
       initInput(input, value, brushThickness, color.l, color.s);
 
@@ -283,7 +314,6 @@ modalButtons.forEach((button) => {
 
   if (modal) {
     const closeModalButton = modal.querySelector("button[autofocus]");
-    console.log(modal);
 
     button.addEventListener("click", () => {
       modal.showModal();

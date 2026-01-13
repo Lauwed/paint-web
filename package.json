@@ -6,7 +6,7 @@
   "scripts": {
     "watch": "tsc && npx prettier . --write && vite build --watch",
     "build": "tsc && npx prettier . --check && vite build",
-    "start": "node index.js",
+    "start": "node index.js --env-file=.env",
     "prepare": "husky",
     "test": "timeout 5 node --env-file=.env index.js || [ $? -eq 124 ]"
   },
@@ -14,7 +14,6 @@
   "dependencies": {
     "canvas": "^3.2.1",
     "express": "^4.18.1",
-    "sanitize-html": "^2.17.0",
     "socket.io": "^4.5.2",
     "socket.io-client": "^4.8.3"
   },

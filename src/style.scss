@@ -290,10 +290,17 @@ dialog {
   &__body {
     display: flex;
     flex-direction: column;
+    gap: var(--element-spacing);
+  }
 
-    button {
-      margin-left: auto;
-    }
+  &__button {
+    width: 100%;
+    text-align: center;
+  }
+
+  &__error {
+    margin: 0;
+    color: rgb(148, 37, 37);
   }
 }
 
@@ -309,4 +316,28 @@ dialog {
     height: 100%;
     width: 100%;
   }
+}
+
+// 98 CSS LIB OVERRIDE
+
+.button {
+  font-family: "Pixelated MS Sans Serif", Arial;
+  font-size: 11px;
+  display: inline-block;
+  background: silver;
+  border: none;
+  border-radius: 0;
+  box-shadow:
+    inset -1px -1px #0a0a0a,
+    inset 1px 1px #fff,
+    inset -2px -2px grey,
+    inset 2px 2px #dfdfdf;
+  box-sizing: border-box;
+  color: transparent;
+  min-height: 23px;
+  min-width: 75px;
+  padding: 0 12px;
+  text-shadow: 0 0 #222;
+  vertical-align: middle;
+  line-height: 2;
 }

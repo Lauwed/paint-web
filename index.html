@@ -147,15 +147,15 @@
             </div>
           </header>
 
-          <form action="" class="login__body window-body">
-            <div>
-              <label for="username">Pseudo</label>
-              <input type="text" id="username" name="username" />
-            </div>
-            <p id="error-username"></p>
+          <div class="window-body login__body">
+            <a
+              href="https://id.twitch.tv/oauth2/authorize?client_id=bogukfbk1bpf9tgex1zan5xsew7nlj&redirect_uri=https://paint.lauradurieux.dev&response_type=token&scope="
+              class="button login__button"
+              >Log with Twitch</a
+            >
 
-            <button type="submit">Se connecter</button>
-          </form>
+            <p class="login__error" id="login-error"></p>
+          </div>
         </dialog>
       </main>
 

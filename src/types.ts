@@ -1,8 +1,7 @@
 export interface User {
   username: string;
-  color: string;
+  color: Color;
   id: string;
-  hue: number;
 }
 
 export interface Shape {
@@ -42,4 +41,9 @@ export interface ClientToServerEvents {
   ) => void;
   disconnect: () => void;
   mousemove: (pos: Position) => void;
+}
+
+export interface TwitchResponseUser {
+  display_name: string;
+  id: string;
 }
