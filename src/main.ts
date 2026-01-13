@@ -197,12 +197,17 @@ const canvasGrid: HTMLCanvasElement | null =
   document.querySelector("#canvas-grid");
 const ctx = canvas?.getContext("2d") || null;
 const ctxGrid = canvasGrid?.getContext("2d") || null;
+const canvasContainer: HTMLElement | null =
+  document.getElementById("canvas-container");
 
 if (canvas) {
   const events = ["mousemove", "mousedown", "touchstart", "touchmove"] as const;
 
   events.forEach((event) => {
     canvas.addEventListener(event, (e: MouseEvent | TouchEvent) => {
+      if (e instanceof MouseEvent && e.ctrlKey) {
+        return;
+      }
       draw(
         e,
         session,
@@ -222,6 +227,80 @@ if (canvas) {
   });
   canvas.addEventListener("touchend", (e: TouchEvent) => {
     setPosition(e, pos, socket);
+  });
+}
+
+if (canvasContainer && canvas && canvasGrid) {
+  let isCtrlPanning = false;
+  let startX = 0;
+  let startY = 0;
+  let startScrollLeft = 0;
+  let startScrollTop = 0;
+
+  canvasContainer.addEventListener("mousedown", (e) => {
+    if (!e.ctrlKey) return;
+
+    isCtrlPanning = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    startScrollLeft = canvasContainer.scrollLeft;
+    startScrollTop = canvasContainer.scrollTop;
+
+    canvas.classList.add("active");
+
+    e.preventDefault();
+  });
+
+  window.addEventListener("mousemove", (e) => {
+    if (!isCtrlPanning) return;
+
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+
+    canvasContainer.scrollLeft = startScrollLeft - dx;
+    canvasContainer.scrollTop = startScrollTop - dy;
+  });
+
+  window.addEventListener("mouseup", () => {
+    isCtrlPanning = false;
+    canvas.classList.remove("active");
+  });
+  let scale = 1;
+
+  canvasContainer.addEventListener(
+    "wheel",
+    (e) => {
+      if (!e.ctrlKey) return;
+
+      e.preventDefault();
+
+      const zoom = e.deltaY < 0 ? 1.1 : 0.9;
+      const newScale = Math.min(4, Math.max(0.25, scale * zoom));
+      if (newScale === scale) return;
+
+      const rect = canvasContainer.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left + canvasContainer.scrollLeft;
+      const mouseY = e.clientY - rect.top + canvasContainer.scrollTop;
+
+      const worldX = mouseX / scale;
+      const worldY = mouseY / scale;
+
+      scale = newScale;
+      canvas.style.width = `${scale * canvas.width}px`;
+      canvasGrid.style.width = `${scale * canvasGrid.width}px`;
+
+      canvasContainer.scrollLeft = worldX * scale - (e.clientX - rect.left);
+      canvasContainer.scrollTop = worldY * scale - (e.clientY - rect.top);
+    },
+    { passive: false }
+  );
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Control") canvas.classList.add("ctrl-pan");
+  });
+
+  window.addEventListener("keyup", (e) => {
+    if (e.key === "Control") canvas.classList.remove("ctrl-pan");
   });
 }
 

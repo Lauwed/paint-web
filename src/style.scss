@@ -318,6 +318,18 @@ dialog {
   }
 }
 
+#canvas-container {
+  overflow: auto;
+  position: relative;
+}
+
+#canvas.ctrl-pan.active {
+  cursor: grabbing;
+}
+#canvas.ctrl-pan {
+  cursor: grab;
+}
+
 // 98 CSS LIB OVERRIDE
 
 .button {
