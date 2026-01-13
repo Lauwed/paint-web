@@ -33,7 +33,6 @@ let currentWindowWidth: number;
 const canvasSize = 2048;
 const root = document.documentElement;
 
-
 socket.on("imageData", ({ src }) => {
   if (ctx) {
     const img = new Image();
