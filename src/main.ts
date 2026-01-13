@@ -33,6 +33,20 @@ let currentWindowWidth: number;
 const canvasSize = 2048;
 const root = document.documentElement;
 
+
+socket.on("imageData", ({ src }) => {
+  if (ctx) {
+    const img = new Image();
+    img.src = src;
+    img.onload = function () {
+      ctx.globalCompositeOperation = "source-over";
+      ctx.drawImage(img, 0, 0);
+    };
+  }
+});
+
+socket.on("draw", (ellipse: Shape) => drawEllipse(ellipse, session, ctx));
+
 /**
  * SESSION DOM
  */
@@ -168,19 +182,6 @@ socket.on("userLogout", (user: User, connected: User[]) => {
   connectedUsers = connected;
   displayConnectedUsers(connectedUsers, online);
 });
-
-socket.on("imageData", ({ src }) => {
-  if (ctx) {
-    const img = new Image();
-    img.src = src;
-    img.onload = function () {
-      ctx.globalCompositeOperation = "source-over";
-      ctx.drawImage(img, 0, 0);
-    };
-  }
-});
-
-socket.on("draw", (ellipse: Shape) => drawEllipse(ellipse, session, ctx));
 
 /**
  * CANVAS
