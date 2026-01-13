@@ -1,46 +1,40 @@
-# ========================================
-# Optimized Multi-Stage Dockerfile
-# Paint Application
-# ========================================
-
-FROM node:alpine3.23 AS base
+# # ========================================
+# # Optimized Multi-Stage Dockerfile
+# # Paint Application
+# # ========================================
+FROM alpine:3.23
+# Install dependencies
+RUN apk add --update \
+        nodejs       \
+        npm          \
+        build-base   \
+        g++          \
+        cairo-dev    \
+        pango-dev    \
+        giflib-dev
 
 # Set working directory
 WORKDIR /app
+
+# Set environment
+ENV NODE_ENV=development
+
+# Copy packages
+COPY package*.json ./
+
+# Run clean install
+RUN npm ci
+
+# Copy source files
+COPY . .
+
+# Build application
+RUN npm run build
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001 -G nodejs && \
     chown -R nodejs:nodejs /app
-
-# ========================================
-# Build Dependencies Stage
-# ========================================
-FROM base AS build-deps
-
-# Copy package files
-COPY package*.json ./
-
-# Create necessary directories and set permissions
-RUN mkdir -p /app/node_modules/.vite && \
-    chown -R nodejs:nodejs /app
-
-# ========================================
-# Development Stage
-# ========================================
-FROM build-deps AS development
-
-# Set environment
-ENV NODE_ENV=development \
-    NPM_CONFIG_LOGLEVEL=warn
-
-# Copy source files
-COPY . .
-
-# Ensure all directories have proper permissions
-RUN mkdir -p /app/node_modules/.vite && \
-    chown -R nodejs:nodejs /app && \
-    chmod -R 755 /app
 
 # Switch to non-root user
 USER nodejs
@@ -49,4 +43,4 @@ USER nodejs
 EXPOSE 5001
 
 # Start development server
-CMD ["npm", "run", "start"]
+CMD ["node", "/app/index.js"]
