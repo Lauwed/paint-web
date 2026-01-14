@@ -3,7 +3,10 @@
 # Paint Application
 # ========================================
 
-FROM node:24-slim AS base
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libcairo2-dev \
+    libpango1.0-dev
 
 # Set working directory
 WORKDIR /app
