@@ -2,6 +2,7 @@
 # Optimized Multi-Stage Dockerfile
 # Paint Application
 # ========================================
+FROM node:lts-trixie-slim AS base
 
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -10,12 +11,6 @@ RUN apt-get update && apt-get install -y \
 
 # Set working directory
 WORKDIR /app
-
-# Create non-root user for security
-RUN groupadd --gid 1001 nodejs && \
-    useradd --uid 1001 --gid nodejs --shell /bin/bash --create-home nodejs && \
-    chown -R nodejs:nodejs /app
-
 # ========================================
 # Build Dependencies Stage
 # ========================================
@@ -25,8 +20,7 @@ FROM base AS build-deps
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
-
+RUN npm ci
 # ========================================
 # Development Stage
 # ========================================
@@ -37,16 +31,7 @@ ENV NODE_ENV=development \
     NPM_CONFIG_LOGLEVEL=warn
 
 # Copy source files
-COPY . .
-
-# Ensure all directories have proper permissions
-RUN mkdir -p /app/node_modules/.vite && \
-    mkdir -p /app/dist && \
-    chown -R nodejs:nodejs /app && \
-    chmod -R 755 /app
-
-# Switch to non-root user
-USER nodejs
+COPY . /app
 
 # Expose ports
 EXPOSE 5001
