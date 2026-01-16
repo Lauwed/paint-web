@@ -1,3 +1,5 @@
+<img width="300" height="300" alt="Frame 211" src="https://github.com/user-attachments/assets/d81cec87-8250-4e9f-97ee-2363dfc61bd9" />
+
 # Paint Web
 
 Project made for and by the Code Potes on [Twitch](https://twitch.tv/devgirl_).
