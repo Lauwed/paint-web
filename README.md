@@ -1,10 +1,10 @@
 # Paint Web
 
-Project made for and by the Code Potes on [Twitch](twitch.tv/devgirl_).
+Project made for and by the Code Potes on [Twitch](https://twitch.tv/devgirl_).
 
 This is a fun project where you draw at the same time with your friends, yay 🚀
 
-[Production Site](paint.lauradurieux.dev)
+[Production Site](https://paint.lauradurieux.dev)
 
 ## How to run
 
