@@ -23,8 +23,8 @@ services:
       - paint-network
     volumes:
       - .:/app
-      - /app/node_modules
-      - /app/dist
+      - node_modules:/app/node_modules
+      - node_distribution:/app/dist
 # ========================================
 # Network Configuration
 # ========================================
@@ -32,3 +32,9 @@ networks:
   paint-network:
     name: paint-network
     driver: bridge
+# ========================================
+# Volume Configuration
+# ========================================
+volumes:
+  node_modules:
+  node_distribution:
