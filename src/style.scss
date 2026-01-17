@@ -86,6 +86,17 @@ dialog {
   overflow: hidden;
 }
 
+.visually-hidden {
+  border: 0;
+  clip-path: inset(50%);
+  height: 1px;
+  margin: 0;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
 .h-full {
   height: 100%;
 }
@@ -200,6 +211,9 @@ dialog {
 .menu {
   margin-bottom: 15px;
   grid-area: 1 / 1 / 2 / 3;
+
+  display: flex;
+  justify-content: space-between;
 }
 
 .content {
@@ -315,6 +329,17 @@ dialog {
   &__list {
     height: 100%;
     width: 100%;
+  }
+}
+
+.github {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  svg {
+    width: 16px;
+    height: 16px;
   }
 }
 

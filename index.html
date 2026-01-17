@@ -6,13 +6,62 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Paint</title>
     <link rel="stylesheet" href="https://unpkg.com/98.css" />
+
+    <!-- HTML Meta Tags -->
+    <title>Multiplayer Paint - DevGirl_ on Twitch</title>
+    <meta name="description" content="Let's play at Paint together ✨" />
+
+    <!-- Facebook Meta Tags -->
+    <meta property="og:url" content="https://paint.lauradurieux.dev/" />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:title"
+      content="Multiplayer Paint - DevGirl_ on Twitch"
+    />
+    <meta property="og:description" content="Let's play at Paint together ✨" />
+    <meta property="og:image" content="/og_preview.png" />
+
+    <!-- Twitter Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta property="twitter:domain" content="paint.lauradurieux.dev" />
+    <meta property="twitter:url" content="https://paint.lauradurieux.dev/" />
+    <meta
+      name="twitter:title"
+      content="Multiplayer Paint - DevGirl_ on Twitch"
+    />
+    <meta
+      name="twitter:description"
+      content="Let's play at Paint together ✨"
+    />
+    <meta name="twitter:image" content="/og_preview.png" />
+
+    <!-- Meta Tags Generated via https://www.opengraph.xyz -->
+
+    <link
+      rel="icon"
+      type="image/png"
+      href="/favicons/favicon-96x96.png"
+      sizes="96x96"
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicons/favicon.svg" />
+    <link rel="shortcut icon" href="/favicons/favicon.ico" />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="/favicons/apple-touch-icon.png"
+    />
+    <meta name="apple-mobile-web-app-title" content="Multiplayer Paint" />
+    <link rel="manifest" href="/favicons/site.webmanifest" />
   </head>
 
   <body>
+    <h1 class="visually-hidden">Multiplayer Paint</h1>
+
     <div class="paint window h-full">
       <header class="title-bar">
         <div class="title-bar-text flex items-center">
-          <img width="20" height="20" src="/logo.png" /> Dev Girl - Paint
+          <img width="20" height="20" src="/logo.png" alt="Paint logo" /> Dev
+          Girl - Paint
         </div>
 
         <div class="title-bar-controls">
@@ -24,11 +73,14 @@
 
       <main class="paint__body window-body">
         <div class="menu">
-          <button id="save">Sauvegarder</button>
+          <div class="menu__left">
+            <button id="save">Sauvegarder</button>
+          </div>
 
-          <button id="logs-button" data-modal="logs">Logs</button>
-
-          <button id="logout">Se déconnecter</button>
+          <div class="menu__right">
+            <button id="logs-button" data-modal="logs">Logs</button>
+            <button id="logout">Se déconnecter</button>
+          </div>
         </div>
 
         <!-- Sidebar -->
@@ -100,7 +152,12 @@
         <dialog class="logs window" id="logs">
           <header class="login__header title-bar">
             <div class="title-bar-text flex items-center">
-              <img width="20" height="20" src="/windows.png" />
+              <img
+                width="20"
+                height="20"
+                src="/windows.png"
+                alt="Window logo"
+              />
               Log In
             </div>
 
@@ -136,7 +193,12 @@
         <dialog id="login" class="login window">
           <header class="login__header title-bar">
             <div class="title-bar-text flex items-center">
-              <img width="20" height="20" src="/windows.png" />
+              <img
+                width="20"
+                height="20"
+                src="/windows.png"
+                alt="Windows logo"
+              />
               Log In
             </div>
 
@@ -162,7 +224,29 @@
       <div class="status-bar">
         <p class="status-bar-field">Press F1 for help</p>
         <p class="status-bar-field">Slide 1</p>
-        <p class="status-bar-field">CPU Usage: 14%</p>
+        <a
+          href="https://github.com/Lauwed/paint-web"
+          class="status-bar-field github"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="lucide lucide-github-icon lucide-github"
+          >
+            <path
+              d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"
+            />
+            <path d="M9 18c-4.51 2-5-2-7-2" />
+          </svg>
+          Github
+        </a>
       </div>
     </div>
 
