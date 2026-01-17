@@ -1,4 +1,4 @@
-<img width="300" height="300" alt="Frame 211" src="https://github.com/user-attachments/assets/d81cec87-8250-4e9f-97ee-2363dfc61bd9" />
+<img width="300" height="300" alt="Frame 211" src="https://github.com/user-attachments/assets/a4e5236c-2f4c-4bc0-9099-c4eed66be95d" />
 
 # Paint Web
 
