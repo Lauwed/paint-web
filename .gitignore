@@ -25,3 +25,7 @@ dist-ssr
 
 # prod file
 image.png
+
+ecosystem.config.js
+ecosystem.config.cjs
+.env

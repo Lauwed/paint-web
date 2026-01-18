@@ -30,21 +30,17 @@ let connectedUsers: User[] = [];
 let session: User | null = null;
 let currentWindowWidth: number;
 
-const canvasSize = 2048;
 const root = document.documentElement;
 
-socket.on("imageData", ({ src }) => {
-  if (ctx) {
-    const img = new Image();
-    img.src = src;
-    img.onload = function () {
-      ctx.globalCompositeOperation = "source-over";
-      ctx.drawImage(img, 0, 0);
-    };
-  }
-});
-
-socket.on("draw", (ellipse: Shape) => drawEllipse(ellipse, session, ctx));
+// Canvas
+const canvasSize = 2048;
+const canvas: HTMLCanvasElement | null = document.querySelector("#canvas");
+const canvasGrid: HTMLCanvasElement | null =
+  document.querySelector("#canvas-grid");
+const ctx = canvas?.getContext("2d") || null;
+const ctxGrid = canvasGrid?.getContext("2d") || null;
+const canvasContainer: HTMLElement | null =
+  document.getElementById("canvas-container");
 
 /**
  * SESSION DOM
@@ -97,9 +93,10 @@ const emitUserLogged = (
 };
 
 // Twitch auth
-const access_token = new URLSearchParams(
-  document.location.hash.replace("#", "")
-).get("access_token");
+const access_token = document.cookie
+  .split("; ")
+  .find((row) => row.startsWith("multi-paint-devgirl="))
+  ?.split("=")[1];
 
 if (access_token) {
   try {
@@ -182,6 +179,19 @@ socket.on("userLogout", (user: User, connected: User[]) => {
   displayConnectedUsers(connectedUsers, online);
 });
 
+socket.on("imageData", ({ src }) => {
+  if (ctx) {
+    const img = new Image();
+    img.src = src;
+    img.onload = function () {
+      ctx.globalCompositeOperation = "source-over";
+      ctx.drawImage(img, 0, 0);
+    };
+  }
+});
+
+socket.on("draw", (ellipse: Shape) => drawEllipse(ellipse, session, ctx));
+
 /**
  * CANVAS
  */
@@ -190,15 +200,6 @@ const pos = { x: 0, y: 0 };
 let tool: Tool = "BRUSH";
 const eraserButton = document.querySelector("#eraser");
 const brushButton = document.querySelector("#brush");
-
-// Canvas
-const canvas: HTMLCanvasElement | null = document.querySelector("#canvas");
-const canvasGrid: HTMLCanvasElement | null =
-  document.querySelector("#canvas-grid");
-const ctx = canvas?.getContext("2d") || null;
-const ctxGrid = canvasGrid?.getContext("2d") || null;
-const canvasContainer: HTMLElement | null =
-  document.getElementById("canvas-container");
 
 if (canvas) {
   const events = ["mousemove", "mousedown", "touchstart", "touchmove"] as const;

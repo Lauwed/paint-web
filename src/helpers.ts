@@ -51,6 +51,8 @@ export const logOutUser = (
 
   // Null session
   session = null;
+  // Delete cookie
+  document.cookie = "multi-paint-devgirl=; Max-Age=0";
 };
 
 export const createLog = (user: User, action: string) => {

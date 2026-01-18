@@ -60,12 +60,66 @@ setInterval(() => {
   }
 }, 10000);
 
-// Public files are in public directory
-app.use(express.static("dist"));
+app.get("/", async (req, res) => {
+  if ("error" in req.query) {
+    // Error
 
-app.get("/", (_, res) => {
+    res.sendFile(__dirname + "/dist/index.html");
+  }
+
+  if ("code" in req.query) {
+    const code = req.query.code;
+
+    // Fetch access token
+    const accessTokenRes = await fetch("https://id.twitch.tv/oauth2/token", {
+      method: "POST",
+      headers: {
+        "Content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        client_id: process.env.TWITCH_CLIENT_ID,
+        client_secret: process.env.TWITCH_CLIENT_SECRET,
+        code,
+        grant_type: "authorization_code",
+        redirect_uri: "https://paint.lauradurieux.dev",
+      }),
+    });
+
+    const data = await accessTokenRes.json();
+
+    if (data.status !== 200) {
+      // Error
+
+      res.sendFile(__dirname + "/dist/index.html");
+    }
+
+    if ("access_token" in data && "expires_in" in data) {
+      const { access_token, expires_in } = data;
+
+      // Check if in banned users
+      const bannedRes = await fetch(
+        "https://api.twitch.tv/helix/moderation/banned?broadcaster_id=510641053",
+        {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+            "Client-Id": "bogukfbk1bpf9tgex1zan5xsew7nlj",
+          },
+        }
+      );
+
+      console.log(await bannedRes.json());
+
+      res.cookie("multi-paint-devgirl", access_token, {
+        expires: new Date(Date.now() + expires_in * 1000),
+      });
+    }
+  }
+
   res.sendFile(__dirname + "/dist/index.html");
 });
+
+// Public files are in public directory
+app.use(express.static("dist"));
 
 io.on("connection", async (socket) => {
   if (lastDrawTimestamp > lastImageDataURITimestamp) {
