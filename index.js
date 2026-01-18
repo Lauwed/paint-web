@@ -96,19 +96,6 @@ app.get("/", async (req, res) => {
     if ("access_token" in data && "expires_in" in data) {
       const { access_token, expires_in } = data;
 
-      // Check if in banned users
-      const bannedRes = await fetch(
-        "https://api.twitch.tv/helix/moderation/banned?broadcaster_id=510641053",
-        {
-          headers: {
-            Authorization: `Bearer ${access_token}`,
-            "Client-Id": "bogukfbk1bpf9tgex1zan5xsew7nlj",
-          },
-        }
-      );
-
-      console.log(await bannedRes.json());
-
       res.cookie("multi-paint-devgirl", access_token, {
         expires: new Date(Date.now() + expires_in * 1000),
       });
