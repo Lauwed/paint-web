@@ -29,3 +29,6 @@ image.png
 ecosystem.config.js
 ecosystem.config.cjs
 .env
+
+banned_users.json
+moderators.json
