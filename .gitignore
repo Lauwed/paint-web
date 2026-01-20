@@ -32,3 +32,5 @@ ecosystem.config.cjs
 
 banned_users.json
 moderators.json
+
+cron

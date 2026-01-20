@@ -11,9 +11,6 @@ import { readFile } from "node:fs/promises";
 
 const TWITCH_REDIRECT_URI = "https://paint.lauradurieux.dev";
 const TWITCH_TOKEN_URI = "https://id.twitch.tv/oauth2/token";
-const TWITCH_USER_URI = "https://api.twitch.tv/helix/users";
-const TWITCH_MODERATOR_URI =
-  "https://api.twitch.tv/helix/moderation/moderators";
 
 const canvas = createCanvas(2048, 2048);
 const ctx = canvas.getContext("2d");
@@ -91,51 +88,18 @@ app.get("/", async (req, res) => {
       }),
     });
 
-    const data = await accessTokenRes.json();
-
-    if (data.status !== 200) {
+    if (accessTokenRes.status !== 200) {
       // Error
 
+      console.error("Can't retrieve user token", accessTokenRes);
       res.sendFile(__dirname + "/dist/index.html");
+      return;
     }
+
+    const data = await accessTokenRes.json();
 
     if ("access_token" in data && "expires_in" in data) {
       const { access_token, expires_in } = data;
-
-      const res = await fetch(TWITCH_USER_URI, {
-        headers: {
-          Authorization: `Bearer ${access_token}`,
-          "Client-Id": process.env.TWITCH_CLIENT_ID,
-        },
-      });
-      if (!res.ok || res.status !== 200) {
-        throw new Error("Login to Twitch failed");
-      }
-
-      const resData = await res.json();
-
-      const twitchData = resData.data;
-
-      if (twitchData.length > 0) {
-        const twitchUser = twitchData[0];
-
-        const { id } = twitchUser;
-
-        // Check if user is banned
-
-        // Check if user moderator
-        const modoRes = await fetch(
-          TWITCH_MODERATOR_URI + `?broadcaster_id=${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${access_token}`,
-              "Client-Id": process.env.TWITCH_CLIENT_ID,
-            },
-          }
-        );
-
-        console.log(await modoRes.json());
-      }
 
       res.cookie("multi-paint-devgirl", access_token, {
         expires: new Date(Date.now() + expires_in * 1000),
