@@ -82,6 +82,7 @@ const emitUserLogged = (
             session = response.user;
 
             setColor(response.user.color, root, true);
+            initToolbar();
           }
 
           connectedUsers = response.connected;
@@ -306,31 +307,34 @@ if (canvasContainer && canvas && canvasGrid) {
 }
 
 // Toolbar
-document.querySelectorAll(".properties__item").forEach((item) => {
-  // submenu
-  const submenu = item.querySelector(".properties__item__submenu");
-  if (submenu) {
-    const input = submenu.querySelector("input");
-    if (input && session) {
-      const value = submenu.querySelector("span");
-      const { color } = session as User;
-      // Init
-      initInput(input, value, brushThickness, color.l, color.s);
+const initToolbar = () => {
+  document.querySelectorAll(".properties__item").forEach((item) => {
+    // submenu
+    const submenu = item.querySelector(".properties__item__submenu");
+    if (submenu) {
+      const input = submenu.querySelector("input");
 
-      input.addEventListener("input", () => {
-        const { thickness } = editColor(
-          input,
-          value,
-          color,
-          brushThickness,
-          root
-        );
+      if (input && session) {
+        const value = submenu.querySelector("span");
+        const { color } = session as User;
+        // Init
+        initInput(input, value, brushThickness, color.l, color.s);
 
-        brushThickness = thickness;
-      });
+        input.addEventListener("input", () => {
+          const { thickness } = editColor(
+            input,
+            value,
+            color,
+            brushThickness,
+            root
+          );
+
+          brushThickness = thickness;
+        });
+      }
     }
-  }
-});
+  });
+};
 
 eraserButton?.addEventListener("click", () => {
   tool = "ERASER";
